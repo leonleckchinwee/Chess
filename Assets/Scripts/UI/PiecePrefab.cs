@@ -8,7 +8,7 @@ namespace Chess
         public ChessSprites Whites;
         public ChessSprites Blacks;
 
-        public Sprite GetPieceSprite (int piece)
+        public Sprite GetPieceSprite(int piece)
         {
             ChessSprites sprite = Piece.IsWhite(piece) ? Whites : Blacks;
             int pieceType = Piece.PieceType(piece);
@@ -34,7 +34,7 @@ namespace Chess
                     return sprite.King;
 
                 default:
-                    Debug.Log(piece);
+                    //Debug.Log(piece);
                     return null;
             }
         }

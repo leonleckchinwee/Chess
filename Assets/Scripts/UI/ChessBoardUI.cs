@@ -6,17 +6,19 @@ namespace Chess
 {
     public class ChessBoardUI : MonoBehaviour
     {
-        public PiecePrefab Pieces;
-        public BoardPrefab Squares;
+        public PiecePrefab          m_Pieces;                           // Chesspiece prefab info
+        public BoardPrefab          m_Squares;                          // Chessboard prefab info
+            
+        public MeshRenderer[,]      m_SquareRenderers;                  // Squares
+        public SpriteRenderer[,]    m_PieceRenderers;                   // Pieces
 
-        public MeshRenderer[,] SquareRenderers;
-        public SpriteRenderer[,] PieceRenderers;
+        public bool                 m_WhiteIsBottom         = false;    // White at bottom
 
-        public bool WhiteIsBottom = false;
+        public float                m_PieceScaling          = 0.15f;    // Scaling for all pieces
 
-        const float BoardDepth = 0.0f;
-        const float PieceDepth = -1.0f;
-        const float PieceFloatingDepth = -2.0f;
+        const float                 m_BoardDepth            = 0.0f;     // Default chessboard depth
+        const float                 m_PieceDepth            = -1.0f;    // Default chesspiece depth
+        const float                 m_PieceFloatingDepth    = -2.0f;    // Chesspiece dragging depth
 
         void Awake()
         {
@@ -27,39 +29,63 @@ namespace Chess
         {
             Shader shader = Shader.Find("Unlit/Color");
 
-            SquareRenderers = new MeshRenderer[8, 8];
-            PieceRenderers = new SpriteRenderer[8, 8];
+            m_SquareRenderers = new MeshRenderer[8, 8];
+            m_PieceRenderers = new SpriteRenderer[8, 8];
 
+            // Create blank 8x8 chessboard
             for (int rank = 0; rank < 8; ++rank)
             {
                 for (int file = 0; file < 8; ++file)
                 {
                     Transform square = GameObject.CreatePrimitive(PrimitiveType.Quad).transform;
 
-                    square.parent = transform;  // Parent-child for neatness
+                    square.parent = transform;
                     square.name = BoardInfo.GetNameFromCoordinates(rank, file);
-                    square.position = GetPositionFromCoordinates(rank, file, BoardDepth);
+                    square.position = GetPositionFromCoordinates(rank, file, m_BoardDepth);
 
-                    SquareRenderers[file, rank] = square.gameObject.GetComponent<MeshRenderer>();
+                    m_SquareRenderers[file, rank] = square.gameObject.GetComponent<MeshRenderer>();
 
                     Material material = new Material(shader);
-                    SquareRenderers[file, rank].material = material;
+                    m_SquareRenderers[file, rank].material = material;
 
-                    SpriteRenderer piece = new GameObject("Piece").AddComponent<SpriteRenderer>();
+                    SpriteRenderer piece = new GameObject("New Piece").AddComponent<SpriteRenderer>();
                     piece.transform.parent = square;
-                    piece.transform.position = GetPositionFromCoordinates(rank, file, PieceDepth);
-                    piece.transform.localScale = Vector3.one * 100.0f / (2000.0f / 6.0f);
-                
-                    PieceRenderers[file, rank] = piece;
+                    piece.transform.position = GetPositionFromCoordinates(rank, file, m_PieceDepth);
+                    piece.transform.localScale = Vector3.one * m_PieceScaling;
+
+                    m_PieceRenderers[file, rank] = piece;
                 }
             }
 
+            // Set the checkered pattern
             ResetSquareColor();
+        }
+
+        void ResetSquareColor(bool highlight = true)
+        {
+            for (int rank = 0; rank < 8; ++rank)
+            {
+                for (int file = 0; file < 8; ++file)
+                {
+                    SetSquareColor(rank, file, m_Squares.LightSquares.Normal, m_Squares.DarkSquares.Normal);
+                }
+            }
+        }
+
+        void SetSquareColor(Coordinates coordinates, Color light, Color dark)
+        {
+            m_SquareRenderers[coordinates.FileIndex, coordinates.RankIndex].material.color = (coordinates.IsLightSquare()) ? light : dark;
+        }
+
+        void SetSquareColor(int rank, int file, Color light, Color dark)
+        {
+            Coordinates coordinates = new Coordinates(rank, file);
+            SetSquareColor(coordinates, light, dark);
         }
 
         Vector3 GetPositionFromCoordinates(int rank, int file, float depth = 0.0f)
         {
-            if (WhiteIsBottom)
+            if (m_WhiteIsBottom)
                 return new Vector3(-3.5f + file, -3.5f + rank, depth);
 
             return new Vector3(-3.5f + 7 - file, 7 - rank - 3.5f, depth);
@@ -70,31 +96,59 @@ namespace Chess
             return GetPositionFromCoordinates(coordinates.RankIndex, coordinates.FileIndex, depth);
         }
 
-        void ResetSquareColor(bool highlight = true)
+        public void UpdateBoard(Board board)
         {
             for (int rank = 0; rank < 8; ++rank)
             {
                 for (int file = 0; file < 8; ++file)
                 {
-                    SetSquareColor(rank, file, Squares.LightSquares.Normal, Squares.DarkSquares.Normal);
+                    int piece = board.Squares[BoardInfo.IndexFromCoordinates(rank, file)];
+
+                    m_PieceRenderers[file, rank].name = Piece.PieceTypeName(piece);
+                    m_PieceRenderers[file, rank].sprite = m_Pieces.GetPieceSprite(piece);
+                    m_PieceRenderers[file, rank].transform.position = GetPositionFromCoordinates(rank, file, m_PieceDepth);
+                    m_PieceRenderers[file, rank].transform.localScale = Vector3.one * m_PieceScaling;
                 }
             }
+        }
 
-            if (highlight)
+        public void SelectSquare(Coordinates coordinates)
+        {
+            SetSquareColor(coordinates, m_Squares.LightSquares.Selected, m_Squares.DarkSquares.Selected);
+        }
+
+        public void CancelSelection(Coordinates coordinates)
+        {
+            ResetSquareColor();
+        }
+
+        public void DragPiece(Coordinates coordinates, Vector2 mousePosition)
+        {
+            m_PieceRenderers[coordinates.FileIndex, coordinates.RankIndex].transform.position 
+                    = new Vector3(mousePosition.x, mousePosition.y, m_PieceFloatingDepth);
+        }
+
+        public bool IsSquareUnderMouse(Vector2 mousePosition, out Coordinates coordinates)
+        {
+            int file = (int)(mousePosition.x + 4);
+            int rank = (int)(mousePosition.y + 4);
+
+            if (!m_WhiteIsBottom)
             {
-                // TODO...
+                file = 7 - file;
+                rank = 7 - rank;
             }
+
+            coordinates = new Coordinates(rank, file);
+            return file >= 0 && file < 8 && rank >= 0 && rank < 8;
         }
 
-        void SetSquareColor(Coordinates coordinates, Color light, Color dark)
-        {
-            SquareRenderers[coordinates.FileIndex, coordinates.RankIndex].material.color = (coordinates.IsLightSquare()) ? light : dark;
-        }
+        
 
-        void SetSquareColor(int rank, int file, Color light, Color dark)
+        public void ResetPiecePosition(Coordinates coordinates)
         {
-            Coordinates coordinates = new Coordinates(rank, file);
-            SetSquareColor(coordinates, light, dark);
-        }
+            Vector3 position = GetPositionFromCoordinates(coordinates, m_PieceDepth);
+            m_PieceRenderers[coordinates.FileIndex, coordinates.RankIndex].transform.position = position;
+        }        
     }
 }

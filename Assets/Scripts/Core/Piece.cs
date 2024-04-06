@@ -1,3 +1,6 @@
+using System;
+using System.Diagnostics;
+
 namespace Chess
 {
     public static class Piece
@@ -17,7 +20,7 @@ namespace Chess
         private const int BlackPieceMask    = 0b10000;
 
         private const int PieceTypeMask     = 0b00111;
-        private const int PieceColorMask    = WhitePieceMask | BlackPieceMask;
+        private const int PieceColorMask    = 0b11000;
 
         // Get piece color
         public static int Color (int piece)
@@ -81,17 +84,17 @@ namespace Chess
             return IsBishop(piece) || IsRook(piece) || IsQueen(piece);
         }
 
-        public static bool IsWhite (int piece)
+        public static bool IsWhite(int piece)
         {
-            return (piece & WhitePieceMask) == WhitePieceMask;
+            return (piece & White) == White;
         }
 
-        public static bool IsBlack (int piece)
+        public static bool IsBlack(int piece)
         {
-            return (piece & BlackPieceMask) == BlackPieceMask;
+            return (piece & White) == Black;
         }
 
-        public static bool IsColor (int piece, int color)
+        public static bool IsColor(int piece, int color)
         {
             return (piece & PieceColorMask) == color;
         }

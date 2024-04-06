@@ -13,16 +13,16 @@ MonoBehaviour:
   m_Name: Pieces
   m_EditorClassIdentifier: 
   Whites:
-    Pawn: {fileID: 21300000, guid: 6bd1b463aa67ee044a4551fee7989bc6, type: 3}
-    Knight: {fileID: 21300000, guid: f2fb31a300baf654ab0e0cd9770e96b5, type: 3}
-    Bishop: {fileID: 21300000, guid: f2b82f436bf77ec4c98893f81a86125b, type: 3}
-    Rook: {fileID: 21300000, guid: 0920e0034c6f87b46926930f2ad895d1, type: 3}
-    Queen: {fileID: 21300000, guid: 7a96b241a5987574f925e74cc5e12362, type: 3}
-    King: {fileID: 21300000, guid: b6f8e184f3d044a41b29c409ccc94b9c, type: 3}
+    Pawn: {fileID: 21300000, guid: 8a85f69e04c447542a4a148ed3853912, type: 3}
+    Knight: {fileID: 21300000, guid: feaae95ff0c626143813b6ec8e7ceb9d, type: 3}
+    Bishop: {fileID: 21300000, guid: 6b41f0c605dd96143ad3be502e67fe3b, type: 3}
+    Rook: {fileID: 21300000, guid: 72da29614875077479890ef467731e32, type: 3}
+    Queen: {fileID: 21300000, guid: bdc84e9d0273af544af147e9c510219a, type: 3}
+    King: {fileID: 21300000, guid: a18558117eb29cc469a3b731f0f712d3, type: 3}
   Blacks:
-    Pawn: {fileID: 21300000, guid: 784ce472b59019b40a4591d736a808e8, type: 3}
-    Knight: {fileID: 21300000, guid: 30720697663f16f4d9cfd38ea0fc0fa2, type: 3}
-    Bishop: {fileID: 21300000, guid: e0ed1d7f4bf30c44586506abdc214f0c, type: 3}
-    Rook: {fileID: 21300000, guid: 02c220ce7dcbf534091443754f771bef, type: 3}
-    Queen: {fileID: 21300000, guid: de0b190da1aceb64885faba4930af8cf, type: 3}
-    King: {fileID: 21300000, guid: 2a82adee58746724980583fe764095a9, type: 3}
+    Pawn: {fileID: 21300000, guid: 0423500f8d6641747937382e2a52e3d7, type: 3}
+    Knight: {fileID: 21300000, guid: 8da0cbd92a5701d45a1e876faf31c1b3, type: 3}
+    Bishop: {fileID: 21300000, guid: 35e5e30caa3908440b2a0ce403966dab, type: 3}
+    Rook: {fileID: 21300000, guid: 759a93ab59b2a604ab3c3e3683afa3f1, type: 3}
+    Queen: {fileID: 21300000, guid: 72f9e0ed215db0b49b1d054e1235a231, type: 3}
+    King: {fileID: 21300000, guid: d8e333cac3272004a8e1922d00b2cb07, type: 3}

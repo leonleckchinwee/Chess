@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace Chess
 {
     public static class BoardInfo
