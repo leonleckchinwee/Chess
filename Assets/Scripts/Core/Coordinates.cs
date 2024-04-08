@@ -1,31 +1,48 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace Chess
 {
     public struct Coordinates : IComparable<Coordinates>
     {
-        public readonly int RankIndex;
-        public readonly int FileIndex;
+        public int m_File;  // Vertical   / Row    / X
+        public int m_Rank;  // Horizontal / Column / Y
 
-        public Coordinates(int rank, int file)
+        public Coordinates (int rank, int file)
         {
-            RankIndex = rank;
-            FileIndex = file;
+            m_Rank = rank;
+            m_File = file;
         }
 
-        public bool IsLightSquare()
+        public bool IsLightSquare ()
         {
-            return (RankIndex + FileIndex) % 2 != 0;
+            return (m_File + m_Rank) % 2 != 0;
         }
 
-        public bool IsDarkSquare()
+        public bool IsDarkSquare ()
         {
-            return (RankIndex + FileIndex) % 2 == 0;
+            return (m_File + m_Rank) % 2 == 0;
         }
 
-        public int CompareTo(Coordinates other)
+        public int CompareTo (Coordinates other)
         {
-            return (RankIndex == other.RankIndex && FileIndex == other.FileIndex) ? 0 : 1;
+            return (Mathf.Approximately (m_File, other.m_File) && Mathf.Approximately (m_Rank, other.m_Rank)) ? 0 : 1;
+        }
+
+        public override bool Equals (object obj)
+        {
+            if (obj is not Coordinates)
+                return false;
+
+            Coordinates other = (Coordinates)obj;
+            return Mathf.Approximately (m_File, other.m_File) && Mathf.Approximately (m_Rank, other.m_Rank);
+        }
+
+        public override int GetHashCode ()
+        {
+            return m_File.GetHashCode () ^ m_Rank.GetHashCode ();
         }
     }
 }

@@ -1,37 +1,31 @@
-using System;
-using System.Diagnostics;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace Chess
 {
     public static class Piece
     {
-        public const int None               = 0b00000;  // 0
-        public const int Pawn               = 0b00001;  // 1
-        public const int Knight             = 0b00010;  // 2
-        public const int Bishop             = 0b00011;  // 3
-        public const int Rook               = 0b00100;  // 4
-        public const int Queen              = 0b00101;  // 5
-        public const int King               = 0b00110;  // 6
+        public const int Pawn      = 0b00001;
+        public const int Knight    = 0b00010;
+        public const int Bishop    = 0b00011;
+        public const int Rook      = 0b00100;
+        public const int Queen     = 0b00101;
+        public const int King      = 0b00110;
+ 
+        public const int White     = 0b01000;
+        public const int Black     = 0b10000;
 
-        public const int White              = 0b01000;  // 8
-        public const int Black              = 0b10000;  // 16
-
-        private const int WhitePieceMask    = 0b01000;
-        private const int BlackPieceMask    = 0b10000;
-
-        private const int PieceTypeMask     = 0b00111;
-        private const int PieceColorMask    = 0b11000;
-
-        // Get piece color
-        public static int Color (int piece)
-        {
-            return piece & PieceColorMask;
-        }
-
-        // Get piece type
+        // Extract piece type from index
         public static int PieceType (int piece)
         {
-            return piece & PieceTypeMask;
+            return piece & 0b00111;
+        }
+
+        // Extract piece color from index
+        public static int PieceColor (int piece)
+        {
+            return piece & 0b11000;
         }
 
         public static bool IsPawn (int piece)
@@ -64,73 +58,52 @@ namespace Chess
             return (piece & King) == King;
         }
 
-        public static bool IsBishopOrRook(int piece)
-        {
-            return IsBishop(piece) || IsRook(piece);
-        }
-
-        public static bool IsBishopOrQueen(int piece)
-        {
-            return IsBishop(piece) || IsQueen(piece);
-        }
-
-        public static bool IsRookOrQueen(int piece)
-        {
-            return IsRook(piece) || IsQueen(piece);
-        }
-
-        public static bool IsSlidingPiece(int piece)
-        {
-            return IsBishop(piece) || IsRook(piece) || IsQueen(piece);
-        }
-
-        public static bool IsWhite(int piece)
+        public static bool IsWhite (int piece)
         {
             return (piece & White) == White;
         }
 
-        public static bool IsBlack(int piece)
+        public static bool IsBlack (int piece)
         {
-            return (piece & White) == Black;
+            return (piece & Black) == Black;
         }
 
-        public static bool IsColor(int piece, int color)
+        public static bool IsSlidingPiece (int piece)
         {
-            return (piece & PieceColorMask) == color;
+            return IsBishop (piece) || IsRook (piece) || IsQueen (piece);
         }
 
-        public static string ColorName(int piece)
+        public static bool IsSameColor (int piece, int color)
         {
-            return IsWhite(piece) ? "White" : "Black";
+            return (piece & 0b11000) == color;
         }
 
-        public static string PieceTypeName(int piece)
+        public static string GetPieceTypeName (int piece)
         {
-            int pieceType = PieceType(piece);
+            int type = PieceType (piece);
 
-            switch (pieceType)
+            switch (type)
             {
                 case Pawn:
                     return "Pawn";
-
                 case Knight:
                     return "Knight";
-
                 case Bishop:
                     return "Bishop";
-
                 case Rook:
                     return "Rook";
-
                 case Queen:
                     return "Queen";
-
                 case King:
                     return "King";
-
                 default:
                     return "None";
             }
+        }
+
+        public static string GetPieceColorName (int piece)
+        {
+            return IsWhite (piece) ? "White" : "Black";
         }
     }
 }

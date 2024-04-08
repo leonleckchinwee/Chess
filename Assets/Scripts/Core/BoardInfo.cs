@@ -1,58 +1,58 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Chess
 {
     public static class BoardInfo
     {
-        public const string RankNames = "12345678";
-        public const string FileNames = "ABCDEFGH";
+        public const string Files = "ABCDEFGH";
+        public const string Ranks = "12345678";
 
-        // Get rank index (row A - H)
-        public static int RankIndex(int square)
+        public static int File (int square)
         {
             return square >> 3;
         }
 
-        // Get file index (column 0 - 7)
-        public static int FileIndex(int square)
+        public static int Rank (int square)
         {
             return square & 0b000111;
         }
 
-        // Get index from (rank, file)
-        public static int IndexFromCoordinates(int rank, int file)
+        public static int CoordinatesToIndex (int rank, int file)
         {
             return rank * 8 + file;
         }
 
-        // Get index from coordinates
-        public static int IndexFromCoordinates(Coordinates coordinates)
+        public static int CoordinatesToIndex (Coordinates coordinates)
         {
-            return IndexFromCoordinates(coordinates.RankIndex, coordinates.FileIndex);
+            return coordinates.m_Rank * 8 + coordinates.m_File;
         }
 
-        // Get coordinates from square index
-        public static Coordinates CoordinatesFromIndex(int square)
+        public static Vector3 GetWorldPositionFromCoordinates (int rank, int file, float depth, bool isWhiteBottom)
         {
-            return new Coordinates(RankIndex(square), FileIndex(square));
+            if (isWhiteBottom)
+                return new Vector3(-3.5f + file, -3.5f + rank, depth);
+
+            return new Vector3(-3.5f + 7f - file, 7 - rank - 3.5f, depth);
         }
 
-        // Get square name from (rank, file)
-        public static string GetNameFromCoordinates(int rank, int file)
+        public static Vector3 GetWorldPositionFromCoordinates (Coordinates coordinates, float depth, bool isWhiteBottom)
         {
-            return FileNames[file] + "" + (rank + 1);
+            if (isWhiteBottom)
+                return new Vector3(-3.5f + coordinates.m_File, -3.5f + coordinates.m_Rank, depth);
+            
+            return new Vector3(-3.5f + 7f - coordinates.m_File, 7f - coordinates.m_Rank - 3.5f, depth);
         }
 
-        // Get square name from coordinates
-        public static string GetNameFromCoordinates(Coordinates coordinates)
+        public static string GetPositionNameFromCoordinates (int rank, int file)
         {
-            return GetNameFromCoordinates(coordinates.RankIndex, coordinates.FileIndex);
+            return Files[file] + "" + (rank + 1);
         }
 
-        // Get square name from square index
-        public static string GetNameFromIndex(int square)
+        public static string GetPositionNameFromCoordinates (Coordinates coordinates)
         {
-            return GetNameFromCoordinates(RankIndex(square), FileIndex(square));
+            return Files[coordinates.m_File] + "" + (coordinates.m_Rank + 1);
         }
     }
 }

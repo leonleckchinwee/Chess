@@ -6,70 +6,27 @@ namespace Chess
 {
     public class Board
     {
-        public const int White = 0;
-        public const int Black = 1;
+        public int[] m_Squares;
 
-        public int[] Squares;
-
-        public int ColorToMove;
-
-        void Initialize()
+        public Board()
         {
-            Squares = new int[64];
+            m_Squares = new int[64];
         }
 
-        public void LoadDefaultPosition()
+        public void LoadPositionFromFEN (string fen)
         {
-            Initialize();
+            FEN.LoadPositionFromFEN(fen);
+        }
 
-            var loadedPosition = FEN.LoadPositionFromFEN(FEN.startingFEN);
+        public void LoadDefaultStartingPosition ()
+        {
+            FEN.PositionInfo positions = FEN.LoadPositionFromFEN (FEN.m_StartingFEN);
 
             for (int index = 0; index < 64; ++index)
             {
-                int piece = loadedPosition.Squares[index];
-                Squares[index] = piece;
+                int piece = positions.m_Squares[index];
+                m_Squares[index] = piece;
             }
-
-            ColorToMove = Piece.White;
-        }
-
-        public void LoadPosition(string position)
-        {
-            Initialize();
-
-            var loadedPosition = FEN.LoadPositionFromFEN(position);
-
-            for (int index = 0; index < 64; ++index)
-            {
-                int piece = loadedPosition.Squares[index];
-                Squares[index] = piece;
-            }
-
-            ColorToMove = Piece.White;
-        }
-
-        public bool TryMakeMove(Move move)
-        {
-            int targetPiece = Squares[move.m_ToSquare];
-
-            if (Piece.IsColor(targetPiece, ColorToMove))
-                return false;
-
-            (Squares[move.m_ToSquare], Squares[move.m_FromSquare]) = (Squares[move.m_FromSquare], 0);
-            return true;
-        }
-
-        public bool MakeMove(Move move)
-        {
-            return TryMakeMove(move);
-        }
-
-        public void ChangeTurn()
-        {
-            if (Piece.IsWhite(ColorToMove))
-                ColorToMove = Piece.Black;
-            else
-                ColorToMove = Piece.White;
         }
     }
 }
