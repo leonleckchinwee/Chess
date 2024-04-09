@@ -65,7 +65,6 @@
 	"workbench.colorCustomizations": 
 	{
 		"editor.background": "#1E1E1E"
-		
 	},
 	"editor.tokenColorCustomizations": 
 	{
@@ -124,7 +123,7 @@
 			{
 				"scope": "entity.name.function.member",
 				"settings": {
-					"foreground": "#39A7FF"
+					"foreground": "#4CCD99"
 				}
 			},			
 			{

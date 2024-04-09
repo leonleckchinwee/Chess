@@ -1,32 +1,60 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 namespace Chess
 {
     public class Board
     {
-        public int[] m_Squares;
+        int[,] m_ChessBoard;
+
 
         public Board()
         {
-            m_Squares = new int[64];
+            m_ChessBoard = new int[8, 8];
+
+
         }
 
-        public void LoadPositionFromFEN (string fen)
+        public void InitializeDefaultStartingPosition()
         {
-            FEN.LoadPositionFromFEN(fen);
+            InitializePosition(FEN.m_StartingFEN);
         }
 
-        public void LoadDefaultStartingPosition ()
+        public void InitializePosition(string fen)
         {
-            FEN.PositionInfo positions = FEN.LoadPositionFromFEN (FEN.m_StartingFEN);
+            FEN.PositionInfo loadedPosition = FEN.LoadPositionFromFEN(fen);
 
-            for (int index = 0; index < 64; ++index)
+            for (int rank = 0; rank < 8; ++rank)
             {
-                int piece = positions.m_Squares[index];
-                m_Squares[index] = piece;
+                for (int file = 0; file < 8; ++file)
+                {
+                    PlacePieceAt(file, rank, loadedPosition.m_Squares[file, rank]);
+                }
             }
+        }
+
+        public int GetPieceAt(int file, int rank)
+        {
+            return m_ChessBoard[file, rank];
+        }
+
+        public int GetPieceAt(int position)
+        {
+            BoardInfo.PositionToFileRank(position, out int file, out int rank);
+            return m_ChessBoard[file, rank];
+        }
+
+        public void PlacePieceAt(int file, int rank, int piece)
+        {
+            m_ChessBoard[file, rank] = piece;
+        }
+
+        public void PlacePieceAt(int position, int piece)
+        {
+            BoardInfo.PositionToFileRank(position, out int file, out int rank);
+            m_ChessBoard[file, rank] = piece;
         }
     }
 }

@@ -7,6 +7,7 @@ namespace Chess
     {
         public SquareColor LightSquares;
         public SquareColor DarkSquares;
+        public SquareColor DebugSquares;
 
         [System.Serializable]
         public struct SquareColor

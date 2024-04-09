@@ -1,23 +1,33 @@
 using System.Collections;
 using System.Collections.Generic;
-using Chess;
 using UnityEngine;
+using Chess.UI;
 
-public class GameManager : MonoBehaviour
+namespace Chess.Game
 {
-    public Board m_Board;
-    public ChessBoardUI m_BoardUI;
-
-    // Start is called before the first frame update
-    void Start()
+    public class GameManager : MonoBehaviour
     {
-        m_Board = new Board ();
-        m_Board.LoadDefaultStartingPosition ();
-    }
+        public bool m_WhiteIsBottom;
 
-    // Update is called once per frame
-    void Update()
-    {
-        m_BoardUI.UpdatePieces (m_Board);
+        [SerializeField]
+        ChessBoard  m_ChessBoardUI;
+
+        Board       m_CurrentBoard;
+
+        void Awake()
+        {
+            m_CurrentBoard = new Board();
+            m_CurrentBoard.InitializeDefaultStartingPosition();
+        }
+
+        void Start()
+        {
+            m_ChessBoardUI.UpdateBoard(m_CurrentBoard);
+        }
+
+        void Update()
+        {
+
+        }
     }
 }
