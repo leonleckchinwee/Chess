@@ -8,11 +8,25 @@ namespace Chess.UI
 {
     public class ChessBoard : MonoBehaviour
     {
+        public enum DebugType
+        {
+            None, EmptySquares, FriendlySquares, OpponentSquares, AttackingSquares,
+            PawnMoves, BishopMoves, KnightMoves, RookMoves, QueenMoves, KingMoves
+        }
+
+        public enum PieceColorType
+        {
+            White, Black
+        }
+
         [SerializeField]
         PiecePrefab         m_PiecePrefab;
 
         [SerializeField]
         BoardPrefab         m_BoardPrefab;
+
+        [SerializeField]
+        Color               m_Background;
 
         [SerializeField]
         Canvas              m_Canvas;
@@ -21,10 +35,15 @@ namespace Chess.UI
         [SerializeField]
         float               m_PieceScaling;
 
+        [SerializeField]
+        PieceColorType      m_PieceColorForDebug;
+
         MeshRenderer[,]     m_Squares;
         SpriteRenderer[,]   m_Pieces;
+        Text                m_DebugIndicator;
 
         bool                m_WhiteIsBottom;
+        int                 m_PieceColor;
 
         const float m_BoardDepth        = 5.0f;
         const float m_PieceDepth        = 1.0f;
@@ -122,6 +141,25 @@ namespace Chess.UI
                 indicator.alignment = TextAnchor.MiddleRight;
                 indicator.text = name;
             }
+
+            // Debug indicator
+            {
+                Vector3 position = BoardInfo.GetWorldPositionFromFileRank(4, 7, m_TextDepth, true);
+
+                m_DebugIndicator = new GameObject().AddComponent<Text>();
+                m_DebugIndicator.name = "Debug";
+
+                m_DebugIndicator.transform.parent = m_Canvas.transform;
+                m_DebugIndicator.transform.localScale = Vector3.one;
+                m_DebugIndicator.transform.position = new Vector3(position.x - 0.5f, position.y + 0.75f, m_TextDepth);
+
+                m_DebugIndicator.GetComponent<RectTransform>().sizeDelta = new Vector2(500.0f, 50.0f);
+
+                m_DebugIndicator.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                m_DebugIndicator.fontSize = 30;
+                m_DebugIndicator.color = Color.white;
+                m_DebugIndicator.alignment = TextAnchor.MiddleCenter;
+            }
         }
 
         // Create a border aroudn the board
@@ -129,7 +167,7 @@ namespace Chess.UI
         {
             Material material = new Material(shader)
             {
-                color = m_BoardPrefab.DebugSquares.Normal
+                color = m_Background
             };
 
             Transform square = GameObject.CreatePrimitive(PrimitiveType.Quad).transform;
@@ -148,18 +186,6 @@ namespace Chess.UI
             m_Squares[file, rank].material.color = BoardInfo.IsLightSquare(file, rank) ? light : dark;
         }
 
-        // Reset all square to default color
-        void ResetAllSquareColor()
-        {
-            for (int rank = 0; rank < 8; ++rank)
-            {
-                for (int file = 0; file < 8; ++file)
-                {
-                    SetSquareColor(file, rank, m_BoardPrefab.LightSquares.Normal, m_BoardPrefab.DarkSquares.Normal);
-                }
-            }
-        }
-
         // Update board with new positions
         public void UpdateBoard(Board board)
         {
@@ -174,6 +200,244 @@ namespace Chess.UI
                     m_Pieces[file, rank].transform.position = BoardInfo.GetWorldPositionFromFileRank(file, rank, m_PieceDepth, m_WhiteIsBottom);
                 }
             }
+        }
+
+        // Reset all square to default color
+        public void ResetAllSquareColor()
+        {
+            for (int rank = 0; rank < 8; ++rank)
+            {
+                for (int file = 0; file < 8; ++file)
+                {
+                    SetSquareColor(file, rank, m_BoardPrefab.LightSquares.Normal, m_BoardPrefab.DarkSquares.Normal);
+                }
+            }
+        }
+
+        public void ResetPosition(int file, int rank)
+        {
+            m_Pieces[file, rank].transform.position = BoardInfo.GetWorldPositionFromFileRank(file, rank, m_PieceDepth, m_WhiteIsBottom);
+        }
+
+        public void ResetPosition(FileRank position)
+        {
+            ResetPosition(position.File, position.Rank);
+        }
+
+        public bool IsValidSquare(Vector2 mousePos, out FileRank position)
+        {
+            int file = (int)(mousePos.x + 4);
+            int rank = (int)(mousePos.y + 4);
+
+            if (!m_WhiteIsBottom)
+            {
+                file = 7 - file;
+                rank = 7 - rank;
+            }
+
+            if (file >= 0 && file < 8 && rank >= 0 && rank < 8)
+            {
+                position = new FileRank(file, rank);
+                return true;
+            }
+
+            position = FileRank.None;
+            return false;
+        }
+    
+        public void SelectSquare(int file, int rank)
+        {
+            SetSquareColor(file, rank, m_BoardPrefab.LightSquares.Selected, m_BoardPrefab.DarkSquares.Selected);
+        }
+
+        public void SelectSquare(FileRank position)
+        {
+            SelectSquare(position.File, position.Rank);
+        }
+
+        public void DragPiece(int file, int rank, Vector2 mousePos)
+        {
+            m_Pieces[file, rank].transform.position = new Vector3(mousePos.x, mousePos.y, m_PieceDragDepth);
+        }
+
+        public void DragPiece(FileRank position, Vector2 mousPos)
+        {
+            DragPiece(position.File, position.Rank, mousPos);
+        }
+
+        /******************** Debug Drawings ********************/
+        public void UpdateDebug(DebugType type, Board board)
+        {
+            if (type != DebugType.None)
+                m_DebugIndicator.text = $"DEBUG MODE: {type}";
+            else
+                m_DebugIndicator.text = "";
+
+            ResetAllSquareColor();
+
+            m_PieceColor = (m_PieceColorForDebug == PieceColorType.White) ? Piece.White : Piece.Black;
+
+            switch (type)
+            {
+                default:
+                case DebugType.None:
+                    return;
+
+                case DebugType.EmptySquares:
+                    DrawEmptySquares(board);
+                    break;
+
+                case DebugType.FriendlySquares:
+                    DrawFriendlySquares(board);
+                    break;
+
+                case DebugType.OpponentSquares:
+                    DrawOpponentSquares(board);
+                    break;
+
+                case DebugType.AttackingSquares:
+                    DrawAttackingSquares(board);
+                    break;
+
+                case DebugType.PawnMoves:
+                    DrawPawnMoves(board);
+                    break;
+
+                case DebugType.BishopMoves:
+                    DrawBishopMoves(board);
+                    break;
+
+                case DebugType.KnightMoves:
+                    DrawKnightMoves(board);
+                    break;
+
+                case DebugType.RookMoves:
+                    DrawRookMoves(board);
+                    break;
+
+                case DebugType.QueenMoves:
+                    DrawQueenMoves(board);
+                    break;
+
+                case DebugType.KingMoves:
+                    DrawKingMoves(board);
+                    break;
+            }
+        }
+
+        void DrawEmptySquares(Board board) 
+        {
+            MoveGenerator generator = new MoveGenerator(board);
+
+            foreach (FileRank move in generator.GenerateEmptySquares())
+            {
+                SetSquareColor(move.File, move.Rank, m_BoardPrefab.LightSquares.Debug, m_BoardPrefab.DarkSquares.Debug);
+            }
+        }
+
+        void DrawFriendlySquares(Board board)
+        {
+            MoveGenerator generator = new MoveGenerator(board);
+
+            foreach (FileRank move in generator.GenerateFriendlySquares())
+            {
+                SetSquareColor(move.File, move.Rank, m_BoardPrefab.LightSquares.Debug, m_BoardPrefab.DarkSquares.Debug);
+            }
+        }
+
+        void DrawOpponentSquares(Board board)
+        {
+            MoveGenerator generator = new MoveGenerator(board);
+            generator.GenerateMovesFor(m_PieceColor);
+
+            foreach (FileRank move in generator.GenerateOpponentSquares())
+            {
+                SetSquareColor(move.File, move.Rank, m_BoardPrefab.LightSquares.Debug, m_BoardPrefab.DarkSquares.Debug);
+            }
+        }
+    
+        void DrawAttackingSquares(Board board)
+        {
+            MoveGenerator generator = new MoveGenerator(board);
+            MoveList moves = generator.GenerateMovesFor(m_PieceColor);
+
+            foreach (Move move in moves.m_AttackingSquares)
+            {
+                SetSquareColor(move.FromFile, move.FromRank, m_BoardPrefab.LightSquares.Selected, m_BoardPrefab.DarkSquares.Selected);
+                SetSquareColor(move.ToFile, move.ToRank, m_BoardPrefab.LightSquares.Debug, m_BoardPrefab.DarkSquares.Debug);
+            }
+        }
+
+        void DrawPawnMoves(Board board)
+        {
+            MoveGenerator generator = new MoveGenerator(board);
+            MoveList moves = generator.GenerateMovesFor(m_PieceColor);
+
+            foreach (Move move in moves.m_PawnMoves)
+            {
+                SetSquareColor(move.FromFile, move.FromRank, m_BoardPrefab.LightSquares.Selected, m_BoardPrefab.DarkSquares.Selected);
+                SetSquareColor(move.ToFile, move.ToRank, m_BoardPrefab.LightSquares.Legal, m_BoardPrefab.DarkSquares.Legal);
+            } 
+        }
+
+        void DrawBishopMoves(Board board)
+        {
+            MoveGenerator generator = new MoveGenerator(board);
+            MoveList moves = generator.GenerateMovesFor(m_PieceColor);
+
+            foreach (Move move in moves.m_BishopMoves)
+            {
+                SetSquareColor(move.FromFile, move.FromRank, m_BoardPrefab.LightSquares.Selected, m_BoardPrefab.DarkSquares.Selected);
+                SetSquareColor(move.ToFile, move.ToRank, m_BoardPrefab.LightSquares.Legal, m_BoardPrefab.DarkSquares.Legal);
+            } 
+        }
+
+        void DrawKnightMoves(Board board)
+        {
+            MoveGenerator generator = new MoveGenerator(board);
+            MoveList moves = generator.GenerateMovesFor(m_PieceColor);
+
+            foreach (Move move in moves.m_KnightMoves)
+            {
+                SetSquareColor(move.FromFile, move.FromRank, m_BoardPrefab.LightSquares.Selected, m_BoardPrefab.DarkSquares.Selected);
+                SetSquareColor(move.ToFile, move.ToRank, m_BoardPrefab.LightSquares.Legal, m_BoardPrefab.DarkSquares.Legal);
+            } 
+        }
+
+        void DrawRookMoves(Board board)
+        {
+            MoveGenerator generator = new MoveGenerator(board);
+            MoveList moves = generator.GenerateMovesFor(m_PieceColor);
+
+            foreach (Move move in moves.m_RookMoves)
+            {
+                SetSquareColor(move.FromFile, move.FromRank, m_BoardPrefab.LightSquares.Selected, m_BoardPrefab.DarkSquares.Selected);
+                SetSquareColor(move.ToFile, move.ToRank, m_BoardPrefab.LightSquares.Legal, m_BoardPrefab.DarkSquares.Legal);
+            } 
+        }
+
+        void DrawQueenMoves(Board board)
+        {
+            MoveGenerator generator = new MoveGenerator(board);
+            MoveList moves = generator.GenerateMovesFor(m_PieceColor);
+
+            foreach (Move move in moves.m_QueenMoves)
+            {
+                SetSquareColor(move.FromFile, move.FromRank, m_BoardPrefab.LightSquares.Selected, m_BoardPrefab.DarkSquares.Selected);
+                SetSquareColor(move.ToFile, move.ToRank, m_BoardPrefab.LightSquares.Legal, m_BoardPrefab.DarkSquares.Legal);
+            } 
+        }
+
+        void DrawKingMoves(Board board)
+        {
+            MoveGenerator generator = new MoveGenerator(board);
+            MoveList moves = generator.GenerateMovesFor(m_PieceColor);
+
+            foreach (Move move in moves.m_KingMoves)
+            {
+                SetSquareColor(move.FromFile, move.FromRank, m_BoardPrefab.LightSquares.Selected, m_BoardPrefab.DarkSquares.Selected);
+                SetSquareColor(move.ToFile, move.ToRank, m_BoardPrefab.LightSquares.Legal, m_BoardPrefab.DarkSquares.Legal);
+            } 
         }
     }
 }

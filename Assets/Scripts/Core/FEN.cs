@@ -1,6 +1,4 @@
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace Chess
 {
@@ -19,6 +17,8 @@ namespace Chess
             PositionInfo loadedPosition = new PositionInfo();
             string[] splitString = fen.Split(' ');
             int fields = splitString.Length;
+
+            loadedPosition.m_WhiteTurnToMove = true;    // Default white to move if not specified
 
             // Starts from top left
             int file = 0;

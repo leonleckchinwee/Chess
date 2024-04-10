@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -7,8 +8,9 @@ namespace Chess
 {
     public class Board
     {
-        int[,] m_ChessBoard;
+        public int     m_CurrentColorTurn;
 
+        int[,]  m_ChessBoard;
 
         public Board()
         {
@@ -33,11 +35,18 @@ namespace Chess
                     PlacePieceAt(file, rank, loadedPosition.m_Squares[file, rank]);
                 }
             }
+
+            m_CurrentColorTurn = loadedPosition.m_WhiteTurnToMove ? Piece.White : Piece.Black;
         }
 
         public int GetPieceAt(int file, int rank)
         {
             return m_ChessBoard[file, rank];
+        }
+
+        public int GetPieceAt(FileRank position)
+        {
+            return m_ChessBoard[position.File, position.Rank];
         }
 
         public int GetPieceAt(int position)
@@ -51,10 +60,31 @@ namespace Chess
             m_ChessBoard[file, rank] = piece;
         }
 
+        public void PlacePieceAt(FileRank position, int piece)
+        {
+            m_ChessBoard[position.File, position.Rank] = piece;
+        }
+
         public void PlacePieceAt(int position, int piece)
         {
             BoardInfo.PositionToFileRank(position, out int file, out int rank);
             m_ChessBoard[file, rank] = piece;
+        }
+
+        public void RemovePieceAt(int file, int rank)
+        {
+            m_ChessBoard[file, rank] = Piece.None;
+        }
+
+        public void RemovePieceAt(FileRank position)
+        {
+            m_ChessBoard[position.File, position.Rank] = Piece.None;
+        }
+
+        public void RemovePieceAt(int position)
+        {
+            BoardInfo.PositionToFileRank(position, out int file, out int rank);
+            m_ChessBoard[file, rank] = Piece.None;
         }
     }
 }

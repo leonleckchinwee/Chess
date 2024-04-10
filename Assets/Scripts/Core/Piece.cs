@@ -1,7 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
 namespace Chess
 {
     public static class Piece
@@ -31,11 +27,17 @@ namespace Chess
             return piece & ColorMask;  // Extract the first 3 bits
         }
 
-        // Color to check must be of type color
-        public static bool IsSameColor(int piece, int colorToCheck)
+        // Get opponent color
+        public static int OpponentColor(int piece)
         {
-            return (piece & ColorMask) == colorToCheck;
+            return Piece.IsWhite(piece & ColorMask) ? Piece.Black : Piece.White;
         }
+
+        // Color to check must be of type color
+        public static bool IsSameColor(int piece, int color)
+        {
+            return (piece & ColorMask) == color;
+        }   
 
         public static bool IsWhite(int piece)
         {

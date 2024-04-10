@@ -14,19 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   LightSquares:
     Normal: {r: 0.74509805, g: 0.58431375, b: 0.76862746, a: 0}
-    Legal: {r: 0.9137255, g: 0.84705883, b: 0.6509804, a: 0}
-    Selected: {r: 0.8490566, g: 0.8490566, b: 0.8490566, a: 0}
+    Legal: {r: 0.6862745, g: 0.81960785, b: 0.59607846, a: 0}
+    Selected: {r: 0.51882344, g: 0.8214903, b: 0.8396226, a: 0}
     MoveFromHighlight: {r: 0, g: 0, b: 0, a: 0}
     MoveToHighlight: {r: 0, g: 0, b: 0, a: 0}
+    Debug: {r: 0.54901963, g: 0.18431373, b: 0.22352941, a: 0}
   DarkSquares:
     Normal: {r: 0.36862746, g: 0.32941177, b: 0.5568628, a: 0}
-    Legal: {r: 0.28403768, g: 0.6981132, b: 0.14818443, a: 0}
-    Selected: {r: 0.6886792, g: 0.6886792, b: 0.6886792, a: 0}
+    Legal: {r: 0.5101887, g: 0.7830189, b: 0.28439835, a: 0}
+    Selected: {r: 0.21003917, g: 0.721505, b: 0.754717, a: 0}
     MoveFromHighlight: {r: 0, g: 0, b: 0, a: 0}
     MoveToHighlight: {r: 0, g: 0, b: 0, a: 0}
-  DebugSquares:
-    Normal: {r: 0.27450982, g: 0.07058824, b: 0.1254902, a: 0}
-    Legal: {r: 0, g: 0, b: 0, a: 0}
-    Selected: {r: 0, g: 0, b: 0, a: 0}
-    MoveFromHighlight: {r: 0, g: 0, b: 0, a: 0}
-    MoveToHighlight: {r: 0, g: 0, b: 0, a: 0}
+    Debug: {r: 0.27450982, g: 0.07058824, b: 0.1254902, a: 0}

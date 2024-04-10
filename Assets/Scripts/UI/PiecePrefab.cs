@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Chess
+namespace Chess.UI
 {
     [CreateAssetMenu(menuName = "Chess Piece")]
     public class PiecePrefab : ScriptableObject
