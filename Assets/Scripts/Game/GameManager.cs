@@ -38,7 +38,7 @@ namespace Chess.Game
 
         void Awake()
         {
-            string testFEN = "2q1rr1k/3bbnnp/p2p1pp1/2pPp3/PpP1P1P1/1P2BNNP/2BQ1PRK/7R w - - bm f5";
+            //string testFEN = "2q1rr1k/3bbnnp/p2p1pp1/2pPp3/PpP1P1P1/1P2BNNP/2BQ1PRK/7R w - - bm f5";
 
             m_CurrentBoard = new Board();
             m_CurrentBoard.InitializeDefaultStartingPosition();
@@ -69,24 +69,24 @@ namespace Chess.Game
 
         void OnPieceSelected(Move move)
         {
-            MoveGenerator generator = new MoveGenerator(m_CurrentBoard);
-            m_CurrentLegalMoves = generator.GenerateLegalMovesAt(move.FromFileRank);
+            // MoveGenerator generator = new MoveGenerator(m_CurrentBoard);
+            // m_CurrentLegalMoves = generator.GenerateLegalMovesAt(move.FromFileRank);
 
-            foreach (Move m in m_CurrentLegalMoves)
-            {   
-                m_ChessBoardUI.SelectSquare(m.ToFileRank);
-            } 
+            // foreach (Move m in m_CurrentLegalMoves)
+            // {   
+            //     m_ChessBoardUI.SelectSquare(m.ToFileRank);
+            // } 
         }
 
         void UpdateOnMoveSelected(Move move)
         {
-            if (m_CurrentLegalMoves.Contains(move))
-            {
-                int piece = m_CurrentBoard.GetPieceAt(move.FromFileRank);
+            // if (m_CurrentLegalMoves.Contains(move))
+            // {
+            //     int piece = m_CurrentBoard.GetPieceAt(move.FromFileRank);
 
-                m_CurrentBoard.PlacePieceAt(move.ToFileRank, piece);
-                m_CurrentBoard.RemovePieceAt(move.FromFileRank);
-            }
+            //     m_CurrentBoard.PlacePieceAt(move.ToFileRank, piece);
+            //     m_CurrentBoard.RemovePieceAt(move.FromFileRank);
+            // }
 
             m_ChessBoardUI.UpdateBoard(m_CurrentBoard);
         }

@@ -1,227 +1,335 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 namespace Chess
 {
-    public class BitBoard
+    public struct BitBoard
     {
-        ulong[,]    m_Boards;       // 12 Bitboards (1 for each color, 1 for each piece type)
-        ulong[]     m_EmptySquares; // 2 Bitboards for empty squares (1 for each color)
+        public ulong[] m_Pieces;        // White pieces: 0 - 5
+        public ulong m_EmptySquares;    // Black pieces: 6 - 11
 
+        // Get current state of board and store piece informations
         public BitBoard(Board board)
         {
-            m_Boards        = new ulong[2, 6];
-
-            m_EmptySquares  = new ulong[2];
+            m_Pieces = new ulong[12];
+            m_EmptySquares = 0;
 
             for (int rank = 0; rank < 8; ++rank)
             {
                 for (int file = 0; file < 8; ++file)
                 {
                     int piece = board.GetPieceAt(file, rank);
-
-                    if (Piece.IsEmpty(piece))                        
+                    if (piece == Piece.None)
                         continue;
 
-                    int pieceType = Piece.PieceType(piece) - 1;
-                    int pieceColor = Piece.IsWhite(piece) ? 0 : 1;
+                    int index       = GetPieceIndex(piece);
+                    int squareIndex = GetSquareIndex(file, rank);
+                    ulong squareBit = 1UL << squareIndex;
 
-                    int squareIndex = rank * 8 + file;
-
-                    m_EmptySquares[pieceColor] |= 1UL << squareIndex;
-                    m_Boards[pieceColor, pieceType] |= 1UL << squareIndex;
+                    m_Pieces[index] |= squareBit;
                 }
             }
+
+            m_EmptySquares = ~CombineAll();
         }
 
-        public int GetPieceAt(int file, int rank, int color)
+        // Clear current state and update
+        public void Update(Board board)
         {
-            int colorIndex = Piece.IsWhite(color) ? 0 : 1;
+            Clear();
 
-            for (int pieceIndex = 0; pieceIndex < 6; ++pieceIndex)
+            for (int rank = 0; rank < 8; ++rank)
             {
-                ulong mask = 1UL << (rank * 8 + file);
+                for (int file = 0; file < 8; ++file)
+                {
+                    int piece = board.GetPieceAt(file, rank);
+                    if (piece == Piece.None)
+                        continue;
 
-                if ((m_Boards[colorIndex, pieceIndex] & mask) == 0)
-                    continue;
+                    int index       = GetPieceIndex(piece);
+                    int squareIndex = GetSquareIndex(file, rank);
+                    ulong squareBit = 1UL << squareIndex;
 
-                return pieceIndex + 1;
+                    m_Pieces[index] |= squareBit;
+                }
+            }
+
+            m_EmptySquares = ~CombineAll();
+        }
+
+        // Clear all
+        public void Clear()
+        {
+            for (int i = 0; i < m_Pieces.Length; ++i)
+            {
+                m_Pieces[i] = 0;
+            }
+
+            m_EmptySquares = 0;
+        }
+
+        // Get any type at (file, rank)
+        public int GetAnyPieceOn(int file, int rank)
+        {
+            if (IsEmpty(file, rank))
+                return Piece.None;
+
+            int squareIndex = GetSquareIndex(file, rank);
+            ulong squareBit = 1UL << squareIndex;
+
+            for (int i = 0; i < m_Pieces.Length; ++i)
+            {
+                if ((m_Pieces[i] & squareBit) != 0)
+                {
+                    int color = i < 6 ? Piece.White : Piece.Black;
+                    int pieceType = i < 6 ? i + 1 : i - 5;
+                    return pieceType | color;
+                }
+            }
+  
+            return Piece.None;
+        }
+
+        // Overloaded function for FileRank
+        public int GetAnyPieceOn(FileRank position)
+        {
+            return GetAnyPieceOn(position.File, position.Rank);
+        }
+
+        // Overloaded function for square position
+        public int GetAnyPieceOn(int position)
+        {
+            BoardInfo.PositionToFileRank(position, out int file, out int rank);
+            return GetAnyPieceOn(file, rank);
+        }
+
+        // Get any piece of color on (file, rank)
+        public int GetPieceOfColorOn(int file, int rank, int color)
+        {
+            if (IsEmpty(file, rank))
+                return Piece.None;
+
+            int index = Piece.IsWhite(color) ? 0 : 6;
+            int squareIndex = GetSquareIndex(file, rank);
+            ulong squareBit = 1UL << squareIndex;
+
+            for (int max = index; index < max + 6; ++index)
+            {
+                if ((m_Pieces[index] & squareBit) != 0)
+                {
+                    int pieceType = Piece.IsWhite(color) ? index + 1 : index - 5;
+                    return pieceType | color;
+                }
             }
 
             return Piece.None;
         }
 
-        public int GetPieceAt(int position, int color)
+        // Overloaded function for FileRank
+        public int GetPieceOfColorOn(FileRank position, int color)
+        {
+            return GetPieceOfColorOn(position.File, position.Rank, color);
+        }
+
+        // Overloaded function for square position
+        public int GetPieceOfColorOn(int position, int color)
         {
             BoardInfo.PositionToFileRank(position, out int file, out int rank);
-            return GetPieceAt(file, rank, color);
+            return GetPieceOfColorOn(file, rank, color);
         }
 
-        public List<FileRank> GetAllEmptySquares()
+        // Get all empty squares
+        public List<FileRank> GetEmptySquares()
         {
-            ulong combinedBoard = m_EmptySquares[0] | m_EmptySquares[1];
+            return BitManip.FindOccupiedSquares(~CombineAll());
+        }
+        
+        // Get occupied spaces
+        public List<FileRank> GetOccupiedSquares()
+        {
+            return BitManip.FindOccupiedSquares(CombineAll());
+        }
+        
+        // Get all pieces of color
+        public List<FileRank> GetAllPiecesOf(int pieceWithColor)
+        {
+            int index = GetPieceIndex(pieceWithColor);
 
-            List<FileRank> result = new List<FileRank>();
-
-            for (int rank = 0; rank < 8; ++rank)
-            {
-                for (int file = 0; file < 8; ++file)
-                {
-                    ulong squareIndex = 1UL << (rank * 8 + file);
-
-                    if ((combinedBoard & squareIndex) == 0)
-                        result.Add(new FileRank(file, rank));
-                }
-            }
-
-            return result;
+            return BitManip.FindOccupiedSquares(m_Pieces[index]);
         }
 
-        public List<FileRank> GetEmptySquares(int color)
+        public List<FileRank> GetAllPiecesOf(int[] pieceWithColor)
         {
-            int colorIndex = Piece.IsWhite(color) ? 0 : 1;
-            ulong board = m_EmptySquares[colorIndex];
-            
-            List<FileRank> result = new List<FileRank>();
+            List<FileRank> positions = new List<FileRank>();
 
-            for (int rank = 0; rank < 8; ++rank)
+            foreach (int piece in pieceWithColor)
             {
-                for (int file = 0; file < 8; ++file)
-                {
-                    ulong squareIndex = 1UL << (rank * 8 + file);
-
-                    if ((board & squareIndex) == 0)
-                        result.Add(new FileRank(file, rank));
-                }
+                int index = GetPieceIndex(piece);
+                positions.AddRange(BitManip.FindOccupiedSquares(m_Pieces[index]));
             }
 
-            return result;
+            return positions;
         }
 
-        public List<FileRank> GetAllOccupiedSquares()
+        // Set piece on (file, rank)
+        public void SetPieceOn(int file, int rank, int pieceWithColor)
         {
-            ulong combinedBoard = m_EmptySquares[0] | m_EmptySquares[1];
+            if (!FileRank.IsValidFileRank(file, rank))
+                throw new ArgumentException("Invalid file or rank!");
 
-            List<FileRank> result = new List<FileRank>();
+            int index       = GetPieceIndex(pieceWithColor);
+            int squareIndex = GetSquareIndex(file, rank);
+            ulong squareBit = 1UL << squareIndex;
 
-            for (int rank = 0; rank < 8; ++rank)
-            {
-                for (int file = 0; file < 8; ++file)
-                {
-                    ulong squareIndex = 1UL << (rank * 8 + file);
-
-                    if ((combinedBoard & squareIndex) != 0)
-                        result.Add(new FileRank(file, rank));
-                }
-            }
-
-            return result;
+            m_Pieces[index] |= squareBit;
         }
 
-        public List<FileRank> GetOccupiedSquares(int color)
+        // Overloaded function for FileRank
+        public void SetPieceOn(FileRank position, int pieceWithColor)
         {
-            int colorIndex = Piece.IsWhite(color) ? 0 : 1;
-            ulong board = m_EmptySquares[colorIndex];
-            
-            List<FileRank> result = new List<FileRank>();
-
-            for (int rank = 0; rank < 8; ++rank)
-            {
-                for (int file = 0; file < 8; ++file)
-                {
-                    ulong squareIndex = 1UL << (rank * 8 + file);
-
-                    if ((board & squareIndex) != 0)
-                        result.Add(new FileRank(file, rank));
-                }
-            }
-
-            return result;
+            SetPieceOn(position.File, position.Rank, pieceWithColor);
         }
 
-        public List<FileRank> GetFriendlySquares(int color)
+        // Overloaded function for square position
+        public void SetPieceOn(int position, int pieceWithColor)
         {
-            int colorIndex = Piece.IsWhite(color) ? 0 : 1;
-            ulong board = 0;
-
-            List<FileRank> result = new List<FileRank>();
-
-            for (int pieceType = 0; pieceType < 6; ++pieceType)
-            {
-                board |= m_Boards[colorIndex, pieceType];
-            }
-
-            for (int rank = 0; rank < 8; ++rank)
-            {
-                for (int file = 0; file < 8; ++file)
-                {
-                    ulong squareIndex = 1UL << (rank * 8 + file);
-
-                    if ((m_EmptySquares[colorIndex] & squareIndex) == 0)
-                        continue;
-
-                    if ((board & squareIndex) != 0)
-                        result.Add(new FileRank(file, rank));
-                }
-            }
-
-            return result;
+            BoardInfo.PositionToFileRank(position, out int file, out int rank);
+            SetPieceOn(file, rank, pieceWithColor);
         }
 
-        public List<FileRank> GetPiecePositions(int pieceType, int color)
+        // Remove any piece on (file, rank)
+        public void RemoveAnyPieceOn(int file, int rank)
         {
-            pieceType -= 1;
-            int colorIndex = Piece.IsWhite(color) ? 0 : 1;
-            ulong board = m_Boards[colorIndex, pieceType];
+            if (!FileRank.IsValidFileRank(file, rank))
+                throw new ArgumentException("Invalid file or rank!");
 
-            List<FileRank> result = new List<FileRank>();
+            int squareIndex = GetSquareIndex(file, rank);
+            ulong squareBit = ~(1UL << squareIndex);
 
-            for (int rank = 0; rank < 8; ++rank)
+            for (int i = 0; i < m_Pieces.Length; ++i)
             {
-                for (int file = 0; file < 8; ++file)
-                {
-                    ulong squareIndex = 1UL << (rank * 8 + file);
-
-                    if ((m_EmptySquares[colorIndex] & squareIndex) == 0)
-                        continue;
-
-                    if ((board & squareIndex) != 0)
-                        result.Add(new FileRank(file, rank));
-                }
+                m_Pieces[i] &= squareBit;
             }
-
-            return result;
         }
 
-        public List<List<FileRank>> GetAllPieces(int color)
+        // Overloaded function for FileRank
+        public void RemoveAnyPieceOn(FileRank position)
         {
-            int colorIndex = Piece.IsWhite(color) ? 0 : 1;
+            RemoveAnyPieceOn(position.File, position.Rank);
+        }
 
-            List<List<FileRank>> result = new List<List<FileRank>>();
+        // Overloaded function for square position
+        public void RemoveAnyPieceOn(int position)
+        {
+            BoardInfo.PositionToFileRank(position, out int file, out int rank);
+            RemoveAnyPieceOn(file, rank);
+        }
 
-            for (int pieceType = 0; pieceType < 6; ++pieceType)
+        // Check if square is empty at (file, rank)
+        public bool IsEmpty(int file, int rank)
+        {
+            if (!FileRank.IsValidFileRank(file, rank))
+                throw new ArgumentException("Invalid file or rank!");
+
+            int squareIndex = GetSquareIndex(file, rank);
+            ulong squareBit = 1UL << squareIndex;
+
+            return (m_EmptySquares & squareBit) != 0;
+        }
+
+        // Overloaded function for FileRank
+        public bool IsEmpty(FileRank position)
+        {
+            return IsEmpty(position.File, position.Rank);
+        }
+
+        // Overloaded function for square position
+        public bool IsEmpty(int position)
+        {
+            BoardInfo.PositionToFileRank(position, out int file, out int rank);
+            return IsEmpty(file, rank);
+        }
+
+        // Check if piece is on square at (file, rank)
+        public bool IsPieceOn(int file, int rank, int pieceWithColor)
+        {
+            if (!FileRank.IsValidFileRank(file, rank))
+                throw new ArgumentException("Invalid file or rank!");
+
+            int index       = GetPieceIndex(pieceWithColor);
+            int squareIndex = GetSquareIndex(file, rank);
+            ulong squareBit = 1UL << squareIndex;
+
+            return (m_Pieces[index] & squareBit) != 0;
+        }
+
+        // Overloaded function for FileRank
+        public bool IsPieceOn(FileRank position, int pieceWithColor)
+        {
+            return IsPieceOn(position.File, position.Rank, pieceWithColor);
+        }
+
+        // Overloaded function for square position
+        public bool IsPieceOn(int position, int PieceWithColor)
+        {
+            BoardInfo.PositionToFileRank(position, out int file, out int rank);
+            return IsPieceOn(file, rank, PieceWithColor);
+        }
+
+        // Get Piece index
+        int GetPieceIndex(int pieceWithColor)
+        {
+            int pieceType = Piece.PieceType(pieceWithColor);
+            if (pieceType == Piece.None)
+                return -1;
+
+            int index = Piece.IsWhite(pieceWithColor) ? pieceType - 1 : pieceType + 5;
+
+            return index;
+        }
+
+        // Get square index
+        int GetSquareIndex(int file, int rank)
+        {
+            return rank * 8 + file;
+        }
+    
+        // Combine all boards into one
+        ulong CombineAll()
+        {
+            ulong combined = 0;
+            for (int i = 0; i < m_Pieces.Length; ++i)
             {
-                result.Add(new List<FileRank>()); // Initialize list for each piece type
+                combined |= m_Pieces[i];
             }
 
-            for (int rank = 0; rank < 8; ++rank)
+            return combined;
+        }
+
+        // Combine white boards into one
+        ulong CombineWhites()
+        {
+            ulong combined = 0;
+            for (int i = 0; i < 6; ++i)
             {
-                for (int file = 0; file < 8; ++file)
-                {
-                    ulong squareIndex = 1UL << (rank * 8 + file);
-
-                    if ((m_EmptySquares[colorIndex] & squareIndex) == 0)
-                        continue;
-
-                    for (int pieceType = 0; pieceType < 6; ++pieceType)
-                    {
-                        if ((m_Boards[colorIndex, pieceType] & squareIndex) != 0)
-                            result[pieceType].Add(new FileRank(file, rank));
-                    }
-                }
+                combined |= m_Pieces[i];
             }
 
-            return result;
+            return combined;
+        }
+
+        // Combine black boards into one
+        ulong CombineBlacks()
+        {
+            ulong combined = 0;
+            for (int i = 6; i < 12; ++i)
+            {
+                combined |= m_Pieces[i];
+            }
+
+            return combined;
         }
     }
 }

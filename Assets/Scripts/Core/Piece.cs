@@ -89,6 +89,16 @@ namespace Chess
             return IsBishop(piece) || IsRook(piece) || IsQueen(piece);
         }
 
+        public static bool IsBishopOrQueen(int piece)
+        {
+            return IsBishop(piece) || IsQueen(piece);
+        }
+
+        public static bool IsRookOrQueen(int piece)
+        {
+            return IsRook(piece) || IsQueen(piece);
+        }
+
         public static string GetTypeName(int piece)
         {
             int pieceType = PieceType(piece);

@@ -4,7 +4,7 @@ namespace Chess
 {
     public struct Move
     {
-        private short m_Data;
+        private readonly short m_Data;
 
         public int FromFile => (m_Data >> 12) & 0x0F;
         public int FromRank => (m_Data >> 8) & 0x0F;

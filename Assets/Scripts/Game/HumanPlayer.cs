@@ -1,8 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Chess.UI;
 using UnityEngine;
+using Chess.UI;
 
 namespace Chess.Game
 {
