@@ -21,20 +21,21 @@ namespace Chess.UI
         }
 
         [SerializeField]
-        PiecePrefab         m_PiecePrefab;
+        PiecePrefab         m_PiecePrefab;          // Piece prefab
 
         [SerializeField]
-        BoardPrefab         m_BoardPrefab;
+        BoardPrefab         m_BoardPrefab;          // Board prefab
 
         [SerializeField]
-        Color               m_Background;        
+        Color               m_Background;           // Background color
 
-        MeshRenderer[,]     m_Squares;
-        SpriteRenderer[,]   m_Pieces;
-        TextMeshPro         m_DebugIndicator;
+        MeshRenderer[,]     m_Squares;              // Renderers for squares
+        SpriteRenderer[,]   m_Pieces;               // Renderers for pieces
+        AudioSource         m_Audio;
+        TextMeshPro         m_DebugIndicator;       // Debug indicator at top of screen
 
-        bool                m_WhiteIsBottom;
-        int                 m_PieceColor;
+        bool                m_WhiteIsBottom;        // Is white at bottom
+        int                 m_PieceColor;           // Piece color for debug drawing
 
         const float m_PieceScaling      = 0.9f;
         const float m_BoardDepth        = 5.0f;
@@ -50,6 +51,8 @@ namespace Chess.UI
 
             m_Squares = new MeshRenderer[8, 8];
             m_Pieces  = new SpriteRenderer[8, 8];
+
+            m_Audio   = gameObject.GetComponent<AudioSource>();
 
             for (int rank = 0; rank < 8; ++rank)
             {
@@ -170,8 +173,6 @@ namespace Chess.UI
             }
         }
 
-        
-
         // Set a square color
         void SetSquareColor(int file, int rank, Color light, Color dark)
         {
@@ -258,6 +259,7 @@ namespace Chess.UI
         }
 
         /******************** Debug Drawings ********************/
+
         public void UpdateDebug(DebugType type, Board board)
         {
             if (type != DebugType.None)
@@ -430,5 +432,9 @@ namespace Chess.UI
                 SetSquareColor(move.ToFile, move.ToRank, m_BoardPrefab.LightSquares.Legal, m_BoardPrefab.DarkSquares.Legal);
             } 
         }
+    
+        /******************** Audios ********************/
+
+        
     }
 }

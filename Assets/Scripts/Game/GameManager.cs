@@ -21,34 +21,41 @@ namespace Chess.Game
         ChessBoard  m_ChessBoardUI;
 
         [SerializeField]
-        PlayerType m_PlayerOne;
+        PlayerType  m_PlayerOne;
 
         [SerializeField]
-        PlayerType m_PlayerTwo;
+        PlayerType  m_PlayerTwo;        
+
+        [SerializeField]
+        string      m_Fen;  // Starting fen string
 
         Board       m_CurrentBoard;
+        Audio       m_Audio;
 
         Player      m_WhitePlayer;
         Player      m_BlackPlayer;
 
         int         m_ColorToMove;
-        List<Move>  m_CurrentLegalMoves;
+        MoveList    m_CurrentLegalMoves;
 
         Action<ChessBoard.DebugType, Board> OnDebugDraw;
 
         void Awake()
         {
-            string testFEN = "2q1rr1k/3bbnnp/p2p1pp1/2pPp3/PpP1P1P1/1P2BNNP/2BQ1PRK/7R b - - bm f5";
+            m_Audio = gameObject.GetComponentInChildren<Audio>();
 
             m_CurrentBoard = new Board();
-            //m_CurrentBoard.InitializeDefaultStartingPosition();
-            m_CurrentBoard.InitializePosition(testFEN);
 
-            m_ChessBoardUI.UpdateBoard(m_CurrentBoard);
+            if (m_Fen == "")
+                m_CurrentBoard.InitializeDefaultStartingPosition();
+            else
+                m_CurrentBoard.InitializePosition(m_Fen);
 
             m_ColorToMove = m_CurrentBoard.m_CurrentColorTurn;
 
             OnDebugDraw += m_ChessBoardUI.UpdateDebug;
+
+            m_ChessBoardUI.UpdateBoard(m_CurrentBoard);
         }
 
         void Start()
@@ -69,26 +76,71 @@ namespace Chess.Game
 
         void OnPieceSelected(Move move)
         {
-            // MoveGenerator generator = new MoveGenerator(m_CurrentBoard);
-            // m_CurrentLegalMoves = generator.GenerateLegalMovesAt(move.FromFileRank);
+            MoveGenerator generator = new MoveGenerator(m_CurrentBoard);
+            m_CurrentLegalMoves = generator.GeneratePseudoLegalMovesFor(m_ColorToMove);
 
-            // foreach (Move m in m_CurrentLegalMoves)
-            // {   
-            //     m_ChessBoardUI.SelectSquare(m.ToFileRank);
-            // } 
+            // TODO: Naive approach...
+            int piece = m_CurrentBoard.GetPieceAt(move.FromFileRank);
+            List<Move> moves;
+
+            switch (Piece.PieceType(piece))
+            {
+                case Piece.Pawn:
+                    moves = m_CurrentLegalMoves.m_PawnMoves;
+                    break;
+
+                case Piece.Knight:
+                    moves = m_CurrentLegalMoves.m_KnightMoves;
+                    break;
+
+                case Piece.Bishop:
+                    moves = m_CurrentLegalMoves.m_BishopMoves;
+                    break;
+
+                case Piece.Rook:
+                    moves = m_CurrentLegalMoves.m_RookMoves;
+                    break;
+
+                case Piece.Queen:
+                    moves = m_CurrentLegalMoves.m_QueenMoves;
+                    break;
+
+                case Piece.King:
+                    moves = m_CurrentLegalMoves.m_KingMoves;
+                    break;
+
+                default:
+                case Piece.None:
+                    return;
+            }
+
+            foreach (Move m in moves)
+            {
+                m_ChessBoardUI.SelectSquare(m.ToFileRank);
+            }
         }
 
         void UpdateOnMoveSelected(Move move)
         {
-            // if (m_CurrentLegalMoves.Contains(move))
-            // {
-            //     int piece = m_CurrentBoard.GetPieceAt(move.FromFileRank);
+            if (m_CurrentLegalMoves.m_AttackingSquares.Contains(move))
+            {
+                int piece = m_CurrentBoard.GetPieceAt(move.FromFileRank);
 
-            //     m_CurrentBoard.PlacePieceAt(move.ToFileRank, piece);
-            //     m_CurrentBoard.RemovePieceAt(move.FromFileRank);
-            // }
+                m_CurrentBoard.PlacePieceAt(move.ToFileRank, piece);
+                m_CurrentBoard.RemovePieceAt(move.FromFileRank);
+
+                OnTurnSwitch();
+
+                m_Audio.PlayPlacementSfx();  // TODO: Capture piece sound!
+            }
 
             m_ChessBoardUI.UpdateBoard(m_CurrentBoard);
+        }
+
+        void OnTurnSwitch()
+        {
+            m_ColorToMove = Piece.OpponentColor(m_ColorToMove);
+            m_CurrentBoard.m_CurrentColorTurn = m_ColorToMove;
         }
 
         void CreatePlayers()
@@ -109,10 +161,10 @@ namespace Chess.Game
             m_BlackPlayer = (m_PlayerTwo == PlayerType.Human) ? new HumanPlayer(m_CurrentBoard, Piece.Black) : new ComputerPlayer(m_CurrentBoard);
 
             // Subscribe to update only when needed
-            m_WhitePlayer.OnMoveSelected    += OnPieceSelected;
-            m_WhitePlayer.OnPiecePlace      += UpdateOnMoveSelected;
-            m_BlackPlayer.OnMoveSelected    += OnPieceSelected;
-            m_BlackPlayer.OnPiecePlace      += UpdateOnMoveSelected;
+            m_WhitePlayer.OnMoveSelected    += OnPieceSelected;         // On move selected but not placed
+            m_BlackPlayer.OnMoveSelected    += OnPieceSelected;         // ..
+            m_WhitePlayer.OnPiecePlace      += UpdateOnMoveSelected;    // On piece placed (check if legal)
+            m_BlackPlayer.OnPiecePlace      += UpdateOnMoveSelected;    // ..
         }
 
         void DebugControls()
