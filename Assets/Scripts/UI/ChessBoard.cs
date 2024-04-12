@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Chess.Game;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -26,25 +27,19 @@ namespace Chess.UI
         BoardPrefab         m_BoardPrefab;
 
         [SerializeField]
-        Color               m_Background;
-
-        [SerializeField]
-        Canvas              m_Canvas;
-
-        [Range(0.0f, 1.0f)]
-        [SerializeField]
-        float               m_PieceScaling;
+        Color               m_Background;        
 
         [SerializeField]
         PieceColorType      m_PieceColorForDebug;
 
         MeshRenderer[,]     m_Squares;
         SpriteRenderer[,]   m_Pieces;
-        Text                m_DebugIndicator;
+        TextMeshPro         m_DebugIndicator;
 
         bool                m_WhiteIsBottom;
         int                 m_PieceColor;
 
+        const float m_PieceScaling      = 1.0f;
         const float m_BoardDepth        = 5.0f;
         const float m_PieceDepth        = 1.0f;
         const float m_PieceDragDepth    = 0.0f;
@@ -101,67 +96,6 @@ namespace Chess.UI
             m_Pieces[file, rank] = piece;
         }
 
-        // Create file, rank indicators
-        void CreateIndicators()
-        {
-            for (int file = 0; file < 8; ++file)
-            {
-                Vector3 position = BoardInfo.GetWorldPositionFromFileRank(file, 0, m_TextDepth, true);
-                string name = $"{BoardInfo.Files[file]}";
-
-                Text indicator = new GameObject().AddComponent<Text>();
-                indicator.name = name;
-
-                indicator.transform.SetParent(m_Canvas.transform, true);
-                indicator.transform.localScale = Vector3.one;
-                indicator.transform.position = new Vector3(position.x, position.y - 1.15f, position.z);
-
-                indicator.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-                indicator.fontSize = 30;
-                indicator.color = Color.white;
-                indicator.alignment = TextAnchor.UpperCenter;
-                indicator.text = name;
-            }
-
-            for (int rank = 0; rank < 8; ++rank)
-            {
-                Vector3 position = BoardInfo.GetWorldPositionFromFileRank(0, rank, m_TextDepth, true);
-                string name = $"{rank + 1}";
-
-                Text indicator = new GameObject().AddComponent<Text>();
-                indicator.name = name;
-
-                indicator.transform.SetParent(m_Canvas.transform, true);
-                indicator.transform.localScale = Vector3.one;
-                indicator.transform.position = new Vector3(position.x - 1.25f, position.y, position.z);
-
-                indicator.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-                indicator.fontSize = 30;
-                indicator.color = Color.white;
-                indicator.alignment = TextAnchor.MiddleRight;
-                indicator.text = name;
-            }
-
-            // Debug indicator
-            {
-                Vector3 position = BoardInfo.GetWorldPositionFromFileRank(4, 7, m_TextDepth, true);
-
-                m_DebugIndicator = new GameObject().AddComponent<Text>();
-                m_DebugIndicator.name = "Debug";
-
-                m_DebugIndicator.transform.SetParent(m_Canvas.transform, true);
-                m_DebugIndicator.transform.localScale = Vector3.one;
-                m_DebugIndicator.transform.position = new Vector3(position.x - 0.5f, position.y + 0.75f, m_TextDepth);
-
-                m_DebugIndicator.GetComponent<RectTransform>().sizeDelta = new Vector2(500.0f, 50.0f);
-
-                m_DebugIndicator.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-                m_DebugIndicator.fontSize = 30;
-                m_DebugIndicator.color = Color.white;
-                m_DebugIndicator.alignment = TextAnchor.MiddleCenter;
-            }
-        }
-
         // Create a border aroudn the board
         void CreateBorder(Shader shader)
         {
@@ -175,10 +109,71 @@ namespace Chess.UI
             square.SetParent(transform);
             square.name = "Border";
             square.position = new Vector3(0.0f, 0.0f, m_BoardDepth + 1.0f);
-            square.localScale = new Vector3(9.0f, 9.0f, 0.0f);
+            square.localScale = new Vector3(10.0f, 10.0f, 0.0f);
 
             square.GetComponent<MeshRenderer>().material = material;
         }
+
+        // Create file, rank indicators
+        void CreateIndicators()
+        {
+            Transform parent = GameObject.Find("Border").transform;
+
+            for (int file = 0; file < 8; ++file)
+            {
+                Vector3 position = BoardInfo.GetWorldPositionFromFileRank(file, 0, m_TextDepth, true);
+                string name = $"{BoardInfo.Files[file]}";
+
+                TextMeshPro indicator = new GameObject().AddComponent<TextMeshPro>();
+                indicator.name = name;
+
+                indicator.transform.SetParent(parent, false);
+                indicator.transform.localScale = Vector3.one;
+                indicator.transform.position = new Vector3(position.x, position.y - 1.0f, m_TextDepth);
+                indicator.rectTransform.sizeDelta = new Vector2(0.01f, 0.01f);
+                indicator.fontSize = 0.5f;
+
+                indicator.alignment = TextAlignmentOptions.Center;
+                indicator.text = name;
+
+            }
+
+            for (int rank = 0; rank < 8; ++rank)
+            {
+                Vector3 position = BoardInfo.GetWorldPositionFromFileRank(0, rank, m_TextDepth, true);
+                string name = $"{rank + 1}";
+
+                TextMeshPro indicator = new GameObject().AddComponent<TextMeshPro>();
+                indicator.name = name;
+
+                indicator.transform.SetParent(parent, false);
+                indicator.transform.localScale = Vector3.one;
+                indicator.transform.position = new Vector3(position.x - 1.0f, position.y, position.z);
+                indicator.rectTransform.sizeDelta = new Vector2(0.01f, 0.01f);
+                indicator.fontSize = 0.5f;
+
+                indicator.alignment = TextAlignmentOptions.Center;
+                indicator.text = name;
+            }
+
+            // Debug indicator
+            {
+                Vector3 position = BoardInfo.GetWorldPositionFromFileRank(4, 7, m_TextDepth, true);
+
+                m_DebugIndicator = new GameObject().AddComponent<TextMeshPro>();
+                m_DebugIndicator.name = "Debug Type Indicator";
+
+                m_DebugIndicator.transform.SetParent(parent, false);
+                m_DebugIndicator.transform.localScale = Vector3.one;
+                m_DebugIndicator.transform.position = new Vector3(position.x - 0.5f, position.y + 1.0f, m_TextDepth);
+
+                m_DebugIndicator.rectTransform.sizeDelta = new Vector2(1.0f, 0.07f);
+                m_DebugIndicator.fontSize = 0.5f;
+                m_DebugIndicator.alignment = TextAlignmentOptions.Center;
+            }
+        }
+
+        
 
         // Set a square color
         void SetSquareColor(int file, int rank, Color light, Color dark)
@@ -196,7 +191,7 @@ namespace Chess.UI
                     int pieceType = board.GetPieceAt(file, rank);
 
                     m_Pieces[file, rank].sprite = m_PiecePrefab.GetPieceSprite(pieceType);
-                    m_Pieces[file, rank].name = BoardInfo.GetPositionNameFromFileRank(file, rank);
+                    m_Pieces[file, rank].name = Piece.GetTypeName(pieceType);
                     m_Pieces[file, rank].transform.position = BoardInfo.GetWorldPositionFromFileRank(file, rank, m_PieceDepth, m_WhiteIsBottom);
                 }
             }
