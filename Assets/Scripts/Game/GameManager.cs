@@ -38,11 +38,11 @@ namespace Chess.Game
 
         void Awake()
         {
-            //string testFEN = "2q1rr1k/3bbnnp/p2p1pp1/2pPp3/PpP1P1P1/1P2BNNP/2BQ1PRK/7R w - - bm f5";
+            string testFEN = "2q1rr1k/3bbnnp/p2p1pp1/2pPp3/PpP1P1P1/1P2BNNP/2BQ1PRK/7R b - - bm f5";
 
             m_CurrentBoard = new Board();
-            m_CurrentBoard.InitializeDefaultStartingPosition();
-            //m_CurrentBoard.InitializePosition(testFEN);
+            //m_CurrentBoard.InitializeDefaultStartingPosition();
+            m_CurrentBoard.InitializePosition(testFEN);
 
             m_ChessBoardUI.UpdateBoard(m_CurrentBoard);
 

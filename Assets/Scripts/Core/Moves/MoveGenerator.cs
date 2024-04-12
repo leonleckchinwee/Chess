@@ -8,7 +8,7 @@ namespace Chess
 {
     public class MoveGenerator
     {
-        Board m_CurrentBoard;
+        Board           m_CurrentBoard;
 
         public int      m_FriendlyColor { get; private set; }
         public int      m_OpponentColor { get; private set; }
@@ -44,7 +44,7 @@ namespace Chess
             m_OpponentMoves.Clear();
         }
 
-        public MoveList GenerateAllMovesFor(int friendlyColor)
+        public MoveList GeneratePseudoLegalMovesFor(int friendlyColor)
         {
             MoveList moves      = new MoveList(friendlyColor);
             FileRank targetPos  = new FileRank();
@@ -119,17 +119,17 @@ namespace Chess
                 pieceType = Piece.Knight | m_FriendlyColor;
 
                 // NE-Upper, NE-Lower, SE-Upper, SE-Lower, SW-Lower, SW-Upper, NW-Lower, NW-Upper
-                int[] fileDirection = { 1, 2,  2,  1, -1, -2, -2, -1 };
-                int[] rankDirection = { 2, 1, -1, -2, -2, -1,  1,  2 };
+                int[] knightAtkFiles = { 1, 2,  2,  1, -1, -2, -2, -1 };
+                int[] knightAtkRanks = { 2, 1, -1, -2, -2, -1,  1,  2 };
 
                 List<FileRank> knights = m_BitBoard.GetAllPiecesOf(pieceType);
 
                 foreach (FileRank knight in knights)
                 {
-                    for (int i = 0; i < fileDirection.Length; ++i)
+                    for (int i = 0; i < knightAtkFiles.Length; ++i)
                     {
-                        file = knight.File + fileDirection[i];
-                        rank = knight.Rank + rankDirection[i];
+                        file = knight.File + knightAtkFiles[i];
+                        rank = knight.Rank + knightAtkRanks[i];
 
                         // Out of bounds check
                         if (!FileRank.IsValidFileRank(file, rank))
@@ -158,6 +158,10 @@ namespace Chess
                 }
             }
 
+            // N, NE, E, SE, S, SW, W, NW
+            int[] fileDirection = { 0, 1, 1,  1,  0, -1, -1, -1 };
+            int[] rankDirection = { 1, 1, 0, -1, -1, -1,  0,  1 };
+
             // Sliding Pieces
             {
                 int[] pieceTypes = 
@@ -167,17 +171,11 @@ namespace Chess
                     Piece.Queen | m_FriendlyColor
                 };
 
-                // N, NE, E, SE, S, SW, W, NW
-                int[] fileDirection = { 0, 1, 1,  1,  0, -1, -1, -1 };
-                int[] rankDirection = { 1, 1, 0, -1, -1, -1,  0,  1 };
-
                 List<FileRank> positions = m_BitBoard.GetAllPiecesOf(pieceTypes);
 
                 foreach (FileRank position in positions)
                 {
                     pieceType = m_CurrentBoard.GetPieceAt(position);
-
-                    Debug.Log(position);
 
                     for (int i = 0; i < fileDirection.Length; ++i)
                     {
@@ -200,21 +198,29 @@ namespace Chess
                                     if (isDiagonal)
                                     {
                                         if (Piece.IsBishop(pieceType))
+                                        {
                                             moves.m_BishopMoves.Add(new Move(position, targetPos));
-
-                                        if (Piece.IsQueen(pieceType))
+                                            moves.m_AttackingSquares.Add(new Move(position, targetPos));
+                                        }
+                                        else if (Piece.IsQueen(pieceType))
+                                        {
                                             moves.m_QueenMoves.Add(new Move(position, targetPos));
+                                            moves.m_AttackingSquares.Add(new Move(position, targetPos));
+                                        }
                                     }
                                     else
                                     {
                                         if (Piece.IsRook(pieceType))
+                                        {
                                             moves.m_RookMoves.Add(new Move(position, targetPos));
-
-                                        if (Piece.IsQueen(pieceType))
+                                            moves.m_AttackingSquares.Add(new Move(position, targetPos));
+                                        }
+                                        else if (Piece.IsQueen(pieceType))
+                                        {
                                             moves.m_QueenMoves.Add(new Move(position, targetPos));
-                                    }
-
-                                    moves.m_AttackingSquares.Add(new Move(position, targetPos));
+                                            moves.m_AttackingSquares.Add(new Move(position, targetPos));
+                                        }
+                                    }        
                                 }
 
                                 break;
@@ -223,18 +229,29 @@ namespace Chess
                             if (isDiagonal)
                             {
                                 if (Piece.IsBishop(pieceType))
+                                {
                                     moves.m_BishopMoves.Add(new Move(position, targetPos));
-
-                                if (Piece.IsQueen(pieceType))
+                                    moves.m_AttackingSquares.Add(new Move(position, targetPos));
+                                }
+                                else if (Piece.IsQueen(pieceType))
+                                {
                                     moves.m_QueenMoves.Add(new Move(position, targetPos));
+                                    moves.m_AttackingSquares.Add(new Move(position, targetPos));
+                                }
                             }
                             else
                             {
                                 if (Piece.IsRook(pieceType))
+                                {
                                     moves.m_RookMoves.Add(new Move(position, targetPos));
+                                    moves.m_AttackingSquares.Add(new Move(position, targetPos));
+                                }
 
                                 if (Piece.IsQueen(pieceType))
+                                {
                                     moves.m_QueenMoves.Add(new Move(position, targetPos));
+                                    moves.m_AttackingSquares.Add(new Move(position, targetPos));
+                                }
                             }
 
                             file += fileDirection[i];
@@ -242,6 +259,44 @@ namespace Chess
 
                             isValid = FileRank.IsValidFileRank(file, rank);
                         }                   
+                    }
+                }
+            }
+
+            // Kings moves
+            {
+                pieceType = Piece.King | friendlyColor;
+
+                List<FileRank> kings = m_BitBoard.GetAllPiecesOf(pieceType);
+
+                foreach (FileRank king in kings)
+                {
+                    for (int i = 0; i < fileDirection.Length; ++i)
+                    {
+                        file = king.File + fileDirection[i];
+                        rank = king.Rank + rankDirection[i];
+
+                        // Out of bounds check
+                        isValid = FileRank.IsValidFileRank(file, rank);
+                        if (!isValid)
+                            continue;
+
+                        targetPos.Set(file, rank);
+                        targetPiece = m_CurrentBoard.GetPieceAt(targetPos);
+
+                        if (!Piece.IsEmpty(targetPiece))
+                        {
+                            if (!Piece.IsSameColor(targetPiece, friendlyColor))
+                            {
+                                moves.m_KingMoves.Add(new Move(king, targetPos));
+                                moves.m_AttackingSquares.Add(new Move(king, targetPos));
+                            }
+
+                            continue;
+                        }
+
+                        moves.m_KingMoves.Add(new Move(king, targetPos));
+                        moves.m_AttackingSquares.Add(new Move(king, targetPos));
                     }
                 }
             }

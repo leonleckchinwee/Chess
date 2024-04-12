@@ -29,9 +29,6 @@ namespace Chess.UI
         [SerializeField]
         Color               m_Background;        
 
-        [SerializeField]
-        PieceColorType      m_PieceColorForDebug;
-
         MeshRenderer[,]     m_Squares;
         SpriteRenderer[,]   m_Pieces;
         TextMeshPro         m_DebugIndicator;
@@ -39,7 +36,7 @@ namespace Chess.UI
         bool                m_WhiteIsBottom;
         int                 m_PieceColor;
 
-        const float m_PieceScaling      = 1.0f;
+        const float m_PieceScaling      = 0.9f;
         const float m_BoardDepth        = 5.0f;
         const float m_PieceDepth        = 1.0f;
         const float m_PieceDragDepth    = 0.0f;
@@ -270,7 +267,7 @@ namespace Chess.UI
 
             ResetAllSquareColor();
 
-            m_PieceColor = (m_PieceColorForDebug == PieceColorType.White) ? Piece.White : Piece.Black;
+            m_PieceColor = board.m_CurrentColorTurn;
 
             switch (type)
             {
@@ -352,14 +349,14 @@ namespace Chess.UI
     
         void DrawAttackingSquares(Board board)
         {
-            // MoveGenerator generator = new MoveGenerator(board);
-            // List<Move> moves = generator.GeneratePawnMoves(m_PieceColor);
+            MoveGenerator generator = new MoveGenerator(board);
+            MoveList moves = generator.GeneratePseudoLegalMovesFor(m_PieceColor);
 
-            // foreach (Move move in moves)
-            // {
-            //     SetSquareColor(move.FromFile, move.FromRank, m_BoardPrefab.LightSquares.Selected, m_BoardPrefab.DarkSquares.Selected);
-            //     SetSquareColor(move.ToFile, move.ToRank, m_BoardPrefab.LightSquares.Debug, m_BoardPrefab.DarkSquares.Debug);
-            // }
+            foreach (Move move in moves.m_AttackingSquares)
+            {
+                SetSquareColor(move.FromFile, move.FromRank, m_BoardPrefab.LightSquares.Selected, m_BoardPrefab.DarkSquares.Selected);
+                SetSquareColor(move.ToFile, move.ToRank, m_BoardPrefab.LightSquares.Debug, m_BoardPrefab.DarkSquares.Debug);
+            }
         }
 
         void DrawPawnMoves(Board board)
@@ -377,9 +374,9 @@ namespace Chess.UI
         void DrawBishopMoves(Board board)
         {
             MoveGenerator generator = new MoveGenerator(board);
-            var bishopMoves = generator.GenerateAllMovesFor(m_PieceColor);  // TODO: TEMP!
+            var moves = generator.GeneratePseudoLegalMovesFor(m_PieceColor);  // TODO: TEMP!
 
-            foreach (Move move in bishopMoves.m_BishopMoves)
+            foreach (Move move in moves.m_BishopMoves)
             {
                 SetSquareColor(move.FromFile, move.FromRank, m_BoardPrefab.LightSquares.Selected, m_BoardPrefab.DarkSquares.Selected);
                 SetSquareColor(move.ToFile, move.ToRank, m_BoardPrefab.LightSquares.Legal, m_BoardPrefab.DarkSquares.Legal);
@@ -389,9 +386,9 @@ namespace Chess.UI
         void DrawKnightMoves(Board board)
         {
             MoveGenerator generator = new MoveGenerator(board);
-            MoveList knightMoves = generator.GenerateAllMovesFor(m_PieceColor); // TODO: TEMP!
+            MoveList moves = generator.GeneratePseudoLegalMovesFor(m_PieceColor); // TODO: TEMP!
 
-            foreach (Move move in knightMoves.m_KnightMoves)
+            foreach (Move move in moves.m_KnightMoves)
             {
                 SetSquareColor(move.FromFile, move.FromRank, m_BoardPrefab.LightSquares.Selected, m_BoardPrefab.DarkSquares.Selected);
                 SetSquareColor(move.ToFile, move.ToRank, m_BoardPrefab.LightSquares.Legal, m_BoardPrefab.DarkSquares.Legal);
@@ -400,38 +397,38 @@ namespace Chess.UI
 
         void DrawRookMoves(Board board)
         {
-            // MoveGenerator generator = new MoveGenerator(board);
-            // MoveList moves = generator.GenerateMovesFor(m_PieceColor);
+            MoveGenerator generator = new MoveGenerator(board);
+            MoveList moves = generator.GeneratePseudoLegalMovesFor(m_PieceColor);
 
-            // foreach (Move move in moves.m_RookMoves)
-            // {
-            //     SetSquareColor(move.FromFile, move.FromRank, m_BoardPrefab.LightSquares.Selected, m_BoardPrefab.DarkSquares.Selected);
-            //     SetSquareColor(move.ToFile, move.ToRank, m_BoardPrefab.LightSquares.Legal, m_BoardPrefab.DarkSquares.Legal);
-            // } 
+            foreach (Move move in moves.m_RookMoves)
+            {
+                SetSquareColor(move.FromFile, move.FromRank, m_BoardPrefab.LightSquares.Selected, m_BoardPrefab.DarkSquares.Selected);
+                SetSquareColor(move.ToFile, move.ToRank, m_BoardPrefab.LightSquares.Legal, m_BoardPrefab.DarkSquares.Legal);
+            } 
         }
 
         void DrawQueenMoves(Board board)
         {
-            // MoveGenerator generator = new MoveGenerator(board);
-            // MoveList moves = generator.GenerateMovesFor(m_PieceColor);
+            MoveGenerator generator = new MoveGenerator(board);
+            MoveList moves = generator.GeneratePseudoLegalMovesFor(m_PieceColor);
 
-            // foreach (Move move in moves.m_QueenMoves)
-            // {
-            //     SetSquareColor(move.FromFile, move.FromRank, m_BoardPrefab.LightSquares.Selected, m_BoardPrefab.DarkSquares.Selected);
-            //     SetSquareColor(move.ToFile, move.ToRank, m_BoardPrefab.LightSquares.Legal, m_BoardPrefab.DarkSquares.Legal);
-            // } 
+            foreach (Move move in moves.m_QueenMoves)
+            {
+                SetSquareColor(move.FromFile, move.FromRank, m_BoardPrefab.LightSquares.Selected, m_BoardPrefab.DarkSquares.Selected);
+                SetSquareColor(move.ToFile, move.ToRank, m_BoardPrefab.LightSquares.Legal, m_BoardPrefab.DarkSquares.Legal);
+            } 
         }
 
         void DrawKingMoves(Board board)
         {
-            // MoveGenerator generator = new MoveGenerator(board);
-            // MoveList moves = generator.GenerateMovesFor(m_PieceColor);
+            MoveGenerator generator = new MoveGenerator(board);
+            MoveList moves = generator.GeneratePseudoLegalMovesFor(m_PieceColor);
 
-            // foreach (Move move in moves.m_KingMoves)
-            // {
-            //     SetSquareColor(move.FromFile, move.FromRank, m_BoardPrefab.LightSquares.Selected, m_BoardPrefab.DarkSquares.Selected);
-            //     SetSquareColor(move.ToFile, move.ToRank, m_BoardPrefab.LightSquares.Legal, m_BoardPrefab.DarkSquares.Legal);
-            // } 
+            foreach (Move move in moves.m_KingMoves)
+            {
+                SetSquareColor(move.FromFile, move.FromRank, m_BoardPrefab.LightSquares.Selected, m_BoardPrefab.DarkSquares.Selected);
+                SetSquareColor(move.ToFile, move.ToRank, m_BoardPrefab.LightSquares.Legal, m_BoardPrefab.DarkSquares.Legal);
+            } 
         }
     }
 }

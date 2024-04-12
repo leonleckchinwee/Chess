@@ -36,7 +36,7 @@ public class MoveGenerationTests
         watch.Start();
 
         MoveGenerator generator = new MoveGenerator(board);
-        var a = generator.GenerateAllMovesFor(Piece.White);
+        var a = generator.GeneratePseudoLegalMovesFor(Piece.White);
 
         watch.Stop();
 
