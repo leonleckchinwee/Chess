@@ -1,21 +1,20 @@
 namespace Chess
 {
-    public static class Piece
+    public struct Piece
     {
-        public const int None       = 0b00000;  // 0
+        public const int None       = 0;
+        public const int Pawn       = 1;
+        public const int Knight     = 2;
+        public const int Bishop     = 3;
+        public const int Rook       = 4;
+        public const int Queen      = 5;
+        public const int King       = 6;
 
-        public const int Pawn       = 0b00001;  // 1
-        public const int Knight     = 0b00010;  // 2
-        public const int Bishop     = 0b00011;  // 3
-        public const int Rook       = 0b00100;  // 4
-        public const int Queen      = 0b00101;  // 5
-        public const int King       = 0b00110;  // 6
+        public const int White      = 8;
+        public const int Black      = 16;
 
-        public const int White      = 0b01000;  // 8
-        public const int Black      = 0b10000;  // 16
-
-        public const int PieceMask  = 0b00111;  // Last 3 bits
-        public const int ColorMask  = 0b11000;  // First 2 bits
+        const int PieceMask  = 7;    // Last 3 bits
+        const int ColorMask  = 24;   // First 2 bits
 
         public static int PieceType(int piece)
         {
@@ -27,10 +26,15 @@ namespace Chess
             return piece & ColorMask;  // Extract the first 3 bits
         }
 
+        public static int MakePiece(int pieceType, int pieceColor)
+        {
+            return pieceType | pieceColor;
+        }
+
         // Get opponent color
         public static int OpponentColor(int piece)
         {
-            return Piece.IsWhite(piece & ColorMask) ? Piece.Black : Piece.White;
+            return IsWhite(piece) ? Black : White;
         }
 
         // Color to check must be of type color
@@ -71,17 +75,17 @@ namespace Chess
 
         public static bool IsRook(int piece)
         {
-            return (piece & PieceMask) == Rook;
+            return ((int)piece & PieceMask) == Rook;
         }
 
         public static bool IsQueen(int piece)
         {
-            return (piece & PieceMask) == Queen;
+            return ((int)piece & PieceMask) == Queen;
         }
 
         public static bool IsKing(int piece)
         {
-            return (piece & PieceMask) == King;
+            return ((int)piece & PieceMask) == King;
         }
 
         public static bool IsSlidingPiece(int piece)
@@ -122,9 +126,20 @@ namespace Chess
             }
         }
 
-        public static string GetColorName(int piece)
+        public static string GetColorName(int color)
         {
-            return IsWhite(piece) ? "White" : "Black";
+            int pieceColor = PieceColor(color);
+            switch (pieceColor)
+            {
+                case White:
+                    return "White";
+
+                case Black:
+                    return "Black";
+
+                default:
+                    return "None";
+            }
         } 
     }
 }

@@ -36,12 +36,13 @@ namespace Chess.Game
         Player      m_BlackPlayer;
 
         int         m_ColorToMove;
-        MoveList    m_CurrentLegalMoves;
 
         Action<ChessBoard.DebugType, Board> OnDebugDraw;
 
         void Awake()
         {
+            //PrecomputedBits.Initialize();
+
             m_Audio = gameObject.GetComponentInChildren<Audio>();
 
             m_CurrentBoard = new Board();
@@ -76,63 +77,63 @@ namespace Chess.Game
 
         void OnPieceSelected(Move move)
         {
-            MoveGenerator generator = new MoveGenerator(m_CurrentBoard);
-            m_CurrentLegalMoves = generator.GeneratePseudoLegalMovesFor(m_ColorToMove);
+            // MoveGenerator generator = new MoveGenerator(m_CurrentBoard);
+            //m_CurrentLegalMoves = generator.GeneratePseudoLegalMovesFor(m_ColorToMove);
 
-            // TODO: Naive approach...
-            int piece = m_CurrentBoard.GetPieceAt(move.FromFileRank);
-            List<Move> moves;
+            // // TODO: Naive approach...
+            // int piece = m_CurrentBoard.GetPieceAt(move.FromFileRank);
+            // List<Move> moves;
 
-            switch (Piece.PieceType(piece))
-            {
-                case Piece.Pawn:
-                    moves = m_CurrentLegalMoves.m_PawnMoves;
-                    break;
+            // switch (Piece.PieceType(piece))
+            // {
+            //     case Piece.Pawn:
+            //         moves = m_CurrentLegalMoves.m_PawnMoves;
+            //         break;
 
-                case Piece.Knight:
-                    moves = m_CurrentLegalMoves.m_KnightMoves;
-                    break;
+            //     case Piece.Knight:
+            //         moves = m_CurrentLegalMoves.m_KnightMoves;
+            //         break;
 
-                case Piece.Bishop:
-                    moves = m_CurrentLegalMoves.m_BishopMoves;
-                    break;
+            //     case Piece.Bishop:
+            //         moves = m_CurrentLegalMoves.m_BishopMoves;
+            //         break;
 
-                case Piece.Rook:
-                    moves = m_CurrentLegalMoves.m_RookMoves;
-                    break;
+            //     case Piece.Rook:
+            //         moves = m_CurrentLegalMoves.m_RookMoves;
+            //         break;
 
-                case Piece.Queen:
-                    moves = m_CurrentLegalMoves.m_QueenMoves;
-                    break;
+            //     case Piece.Queen:
+            //         moves = m_CurrentLegalMoves.m_QueenMoves;
+            //         break;
 
-                case Piece.King:
-                    moves = m_CurrentLegalMoves.m_KingMoves;
-                    break;
+            //     case Piece.King:
+            //         moves = m_CurrentLegalMoves.m_KingMoves;
+            //         break;
 
-                default:
-                case Piece.None:
-                    return;
-            }
+            //     default:
+            //     case Piece.None:
+            //         return;
+            // }
 
-            foreach (Move m in moves)
-            {
-                m_ChessBoardUI.SelectSquare(m.ToFileRank);
-            }
+            // foreach (Move m in moves)
+            // {
+            //     m_ChessBoardUI.SelectSquare(m.ToFileRank);
+            // }
         }
 
         void UpdateOnMoveSelected(Move move)
         {
-            if (m_CurrentLegalMoves.m_AttackingSquares.Contains(move))
-            {
-                int piece = m_CurrentBoard.GetPieceAt(move.FromFileRank);
+            // if (m_CurrentLegalMoves.m_AttackingSquares.Contains(move))
+            // {
+            //     int piece = m_CurrentBoard.GetPieceAt(move.FromFileRank);
 
-                m_CurrentBoard.PlacePieceAt(move.ToFileRank, piece);
-                m_CurrentBoard.RemovePieceAt(move.FromFileRank);
+            //     m_CurrentBoard.PlacePieceAt(move.ToFileRank, piece);
+            //     m_CurrentBoard.RemovePieceAt(move.FromFileRank);
 
-                OnTurnSwitch();
+            //     OnTurnSwitch();
 
-                m_Audio.PlayPlacementSfx();  // TODO: Capture piece sound!
-            }
+            //     m_Audio.PlayPlacementSfx();  // TODO: Capture piece sound!
+            // }
 
             m_ChessBoardUI.UpdateBoard(m_CurrentBoard);
         }

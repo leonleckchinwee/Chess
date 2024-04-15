@@ -8,15 +8,13 @@ namespace Chess
 {
     public class Board
     {
-        public int     m_CurrentColorTurn;
+        public int m_CurrentColorTurn;
 
-        int[,]  m_ChessBoard;
+        int[,] m_ChessBoard;
 
         public Board()
         {
             m_ChessBoard = new int[8, 8];
-
-
         }
 
         public void InitializeDefaultStartingPosition()
@@ -37,6 +35,16 @@ namespace Chess
             }
 
             m_CurrentColorTurn = loadedPosition.m_WhiteTurnToMove ? Piece.White : Piece.Black;
+        }
+
+        public void MakeMove()
+        {
+
+        }
+
+        public void UnmakeMove()
+        {
+
         }
 
         public int GetPieceAt(int file, int rank)
@@ -85,6 +93,16 @@ namespace Chess
         {
             BoardInfo.PositionToFileRank(position, out int file, out int rank);
             m_ChessBoard[file, rank] = Piece.None;
+        }
+    
+        public bool IsEmpty(int file, int rank)
+        {
+            return Piece.IsEmpty(m_ChessBoard[file, rank]);
+        }
+
+        public bool IsEmpty(FileRank position)
+        {
+            return IsEmpty(position.File, position.Rank);
         }
     }
 }

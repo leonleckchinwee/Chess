@@ -44,7 +44,7 @@ namespace Chess
                     int color = char.IsUpper(symbol) ? Piece.White : Piece.Black;
                     int type = m_PieceTypeMap[char.ToLower(symbol)];
 
-                    loadedPosition.m_Squares[file, rank] = type | color;
+                    loadedPosition.m_Squares[file, rank] = Piece.MakePiece(type, color);
                     ++file;
                 }
             }   

@@ -15,7 +15,7 @@ namespace Chess
         public FileRank ToFileRank   => new FileRank(ToFile, ToRank);
 
         const int MinValue = 0;
-        const int MaxValue =  8;
+        const int MaxValue = 8;
 
         public Move(int fromFile, int fromRank, int toFile, int toRank)
         {
@@ -47,6 +47,17 @@ namespace Chess
                 throw new ArgumentOutOfRangeException("File and rank must be of values between 0 to 8!");
 
             m_Data = Pack(fromFile, fromRank, to.File, to.Rank);
+        }
+
+        public Move(int fromIndex, int toIndex)
+        {
+            if (fromIndex < 0 || fromIndex > 63 || toIndex < 0 || toIndex > 63)
+                throw new ArgumentOutOfRangeException("Square index must be of values between 0 and 63!");
+
+            BoardInfo.PositionToFileRank(fromIndex, out int fromFile, out int fromRank);
+            BoardInfo.PositionToFileRank(toIndex, out int toFile, out int toRank);
+
+            m_Data = Pack(fromFile, fromRank, toFile, toRank);
         }
 
         public static short Pack(int fromFile, int fromRank, int toFile, int toRank)

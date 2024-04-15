@@ -8,43 +8,28 @@ using System.Diagnostics;
 
 public class MoveGenerationTests
 {
-    // A Test behaves as an ordinary method
-    [Test]
-    public void GeneratePawnMoveTest()
-    {
-        Board board = new Board();
-        board.InitializeDefaultStartingPosition();
-
-        Stopwatch watch = new Stopwatch();
-        watch.Start();
-
-        MoveGenerator generator = new MoveGenerator(board);
-        generator.GeneratePawnMoves(Piece.White);
-
-        watch.Stop();
-
-        UnityEngine.Debug.Log($"Generate Pawn Move Test: {watch.Elapsed.TotalMilliseconds}ms");
-    }
-
     [Test]
     public void GenerateAllMoveTest()
     {
-        Board board = new Board();
-        board.InitializeDefaultStartingPosition();
+        string testFEN = "rnbqkb1r/pp1p1ppp/5n2/2p1p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2 ";
 
-        Stopwatch watch = new Stopwatch();
-        watch.Start();
+        PrecomputedBits.Initialize();
+
+        Board board = new Board();
+        board.InitializePosition(testFEN);
+        // board.InitializeDefaultStartingPosition();
+
+        Stopwatch watch = Stopwatch.StartNew();
 
         MoveGenerator generator = new MoveGenerator(board);
-        var a = generator.GeneratePseudoLegalMovesFor(Piece.White);
+        var b = generator.GenerateMoves(Square.F3);
 
         watch.Stop();
+        UnityEngine.Debug.Log($"Time taken: {watch.Elapsed.TotalMilliseconds}ms");
 
-        UnityEngine.Debug.Log($"Generate Pawn Move Test: {watch.Elapsed.TotalMilliseconds}ms");
-
-        foreach (var b in a.m_KnightMoves)
+        foreach (var a in b.KnightMoves)
         {
-            UnityEngine.Debug.Log(b);
+            UnityEngine.Debug.Log(a);
         }
     }
 }

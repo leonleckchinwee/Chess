@@ -1,408 +1,269 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using Chess.Game;
 using UnityEngine;
 
 namespace Chess
 {
     public class MoveGenerator
     {
-        Board           m_CurrentBoard;
-
         public int      m_FriendlyColor { get; private set; }
         public int      m_OpponentColor { get; private set; }
-
-        public MoveList m_FriendlyMoves { get; private set; }
-        public MoveList m_OpponentMoves { get; private set; }
 
         public BitBoard m_BitBoard      { get; private set; }
 
         public MoveGenerator(Board board)
         {
-            m_CurrentBoard      = board;
-
-            m_FriendlyColor     = board.m_CurrentColorTurn;
-            m_OpponentColor     = Piece.OpponentColor(m_FriendlyColor);
-
-            m_BitBoard          = new BitBoard(board);
-
-            m_FriendlyMoves     = new MoveList(m_FriendlyColor);
-            m_OpponentMoves     = new MoveList(m_OpponentColor);
-        }
-
-        public void UpdateGenerator(Board board)
-        {
-            m_CurrentBoard  = board;
-
             m_FriendlyColor = board.m_CurrentColorTurn;
             m_OpponentColor = Piece.OpponentColor(m_FriendlyColor);
 
-            m_BitBoard      = new BitBoard(board);  // TODO: clear and reset
-
-            m_FriendlyMoves.Clear();
-            m_OpponentMoves.Clear();
+            m_BitBoard      = new BitBoard(board);
         }
 
-        public MoveList GeneratePseudoLegalMovesFor(int friendlyColor)
+        public void Update(Board board)
         {
-            MoveList moves      = new MoveList(friendlyColor);
-            FileRank targetPos  = new FileRank();
+            m_FriendlyColor = board.m_CurrentColorTurn;
+            m_OpponentColor = Piece.OpponentColor(m_FriendlyColor);
 
-            int pieceType;
-            int targetPiece;
-
-            // Pawn moves
-            {
-                pieceType = Piece.Pawn | friendlyColor;
-
-                int forwardDirection = Piece.IsWhite(friendlyColor) ? 1 : -1;
-
-                List<FileRank> pawns = m_BitBoard.GetAllPiecesOf(pieceType);
-                
-                foreach (FileRank pawn in pawns)
-                {
-                    // Out of bounds check
-                    int posToCheck = pawn.Rank + forwardDirection;
-                    if (!IsValidIndex(posToCheck))
-                        continue;
-
-                    targetPos.Set(pawn.File, posToCheck);
-                    targetPiece = m_CurrentBoard.GetPieceAt(targetPos);
-
-                    // Check if forward square is blocked
-                    if (Piece.IsEmpty(targetPiece))
-                    {
-                        moves.m_PawnMoves.Add(new Move(pawn, targetPos));
-                        moves.m_AttackingSquares.Add(new Move(pawn, targetPos));
-
-                        // Double advance check (only available if pawn at starting rank)
-                        if (pawn.Rank == (Piece.IsWhite(friendlyColor) ? 1 : 6))
-                        {
-                            posToCheck = pawn.Rank + forwardDirection * 2;
-
-                            targetPos.Set(pawn.File, posToCheck);
-                            targetPiece = m_CurrentBoard.GetPieceAt(targetPos);
-
-                            if (Piece.IsEmpty(targetPiece))
-                                moves.m_PawnMoves.Add(new Move(pawn, targetPos));
-                        }
-                    }
-
-                    // Check if opponent within attack range (only check diagonally left and right)
-                    for (int offset = -1; offset <= 1; offset += 2)
-                    {
-                        posToCheck = pawn.File + offset;
-
-                        // Out of bounds check
-                        if (!IsValidIndex(posToCheck))
-                            continue;
-
-                        targetPos.Set(posToCheck, pawn.Rank + forwardDirection);
-                        targetPiece = m_CurrentBoard.GetPieceAt(targetPos);
-
-                        // Can't attack empty squares or friendly pieces
-                        if (Piece.IsEmpty(targetPiece) || Piece.IsSameColor(targetPiece, friendlyColor))
-                            continue;
-
-                        moves.m_PawnMoves.Add(new Move(pawn, targetPos));
-                        moves.m_AttackingSquares.Add(new Move(pawn, targetPos));
-                    }
-                }
-            }
-
-            int file, rank;
-            bool isValid;
-
-            // Knight moves
-            {
-                pieceType = Piece.Knight | m_FriendlyColor;
-
-                // NE-Upper, NE-Lower, SE-Upper, SE-Lower, SW-Lower, SW-Upper, NW-Lower, NW-Upper
-                int[] knightAtkFiles = { 1, 2,  2,  1, -1, -2, -2, -1 };
-                int[] knightAtkRanks = { 2, 1, -1, -2, -2, -1,  1,  2 };
-
-                List<FileRank> knights = m_BitBoard.GetAllPiecesOf(pieceType);
-
-                foreach (FileRank knight in knights)
-                {
-                    for (int i = 0; i < knightAtkFiles.Length; ++i)
-                    {
-                        file = knight.File + knightAtkFiles[i];
-                        rank = knight.Rank + knightAtkRanks[i];
-
-                        // Out of bounds check
-                        if (!FileRank.IsValidFileRank(file, rank))
-                            continue;
-
-                        targetPos.Set(file, rank);
-                        targetPiece = m_CurrentBoard.GetPieceAt(file, rank);
-
-                        // Check if square is occupied
-                        if (!Piece.IsEmpty(targetPiece))
-                        {
-                            // Valid opponent square to attack
-                            if (!Piece.IsSameColor(targetPiece, friendlyColor))
-                            {
-                                moves.m_KnightMoves.Add(new Move(knight, targetPos));
-                                moves.m_AttackingSquares.Add(new Move(knight, targetPos));
-                            }
-
-                            continue;
-                        }
-
-                        // Empty squares valid to move
-                        moves.m_KnightMoves.Add(new Move(knight, targetPos));
-                        moves.m_AttackingSquares.Add(new Move(knight, targetPos));
-                    }
-                }
-            }
-
-            // N, NE, E, SE, S, SW, W, NW
-            int[] fileDirection = { 0, 1, 1,  1,  0, -1, -1, -1 };
-            int[] rankDirection = { 1, 1, 0, -1, -1, -1,  0,  1 };
-
-            // Sliding Pieces
-            {
-                int[] pieceTypes = 
-                { 
-                    Piece.Bishop | m_FriendlyColor, 
-                    Piece.Rook | m_FriendlyColor,
-                    Piece.Queen | m_FriendlyColor
-                };
-
-                List<FileRank> positions = m_BitBoard.GetAllPiecesOf(pieceTypes);
-
-                foreach (FileRank position in positions)
-                {
-                    pieceType = m_CurrentBoard.GetPieceAt(position);
-
-                    for (int i = 0; i < fileDirection.Length; ++i)
-                    {
-                        file = position.File + fileDirection[i];
-                        rank = position.Rank + rankDirection[i];
-
-                        isValid = FileRank.IsValidFileRank(file, rank);
-
-                        while (isValid)
-                        {
-                            targetPos.Set(file, rank);
-                            targetPiece = m_CurrentBoard.GetPieceAt(targetPos);
-
-                            bool isDiagonal = (i % 2 != 0);
-
-                            if (!Piece.IsEmpty(targetPiece))
-                            {
-                                if (!Piece.IsSameColor(targetPiece, friendlyColor))
-                                {
-                                    if (isDiagonal)
-                                    {
-                                        if (Piece.IsBishop(pieceType))
-                                        {
-                                            moves.m_BishopMoves.Add(new Move(position, targetPos));
-                                            moves.m_AttackingSquares.Add(new Move(position, targetPos));
-                                        }
-                                        else if (Piece.IsQueen(pieceType))
-                                        {
-                                            moves.m_QueenMoves.Add(new Move(position, targetPos));
-                                            moves.m_AttackingSquares.Add(new Move(position, targetPos));
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if (Piece.IsRook(pieceType))
-                                        {
-                                            moves.m_RookMoves.Add(new Move(position, targetPos));
-                                            moves.m_AttackingSquares.Add(new Move(position, targetPos));
-                                        }
-                                        else if (Piece.IsQueen(pieceType))
-                                        {
-                                            moves.m_QueenMoves.Add(new Move(position, targetPos));
-                                            moves.m_AttackingSquares.Add(new Move(position, targetPos));
-                                        }
-                                    }        
-                                }
-
-                                break;
-                            }
-
-                            if (isDiagonal)
-                            {
-                                if (Piece.IsBishop(pieceType))
-                                {
-                                    moves.m_BishopMoves.Add(new Move(position, targetPos));
-                                    moves.m_AttackingSquares.Add(new Move(position, targetPos));
-                                }
-                                else if (Piece.IsQueen(pieceType))
-                                {
-                                    moves.m_QueenMoves.Add(new Move(position, targetPos));
-                                    moves.m_AttackingSquares.Add(new Move(position, targetPos));
-                                }
-                            }
-                            else
-                            {
-                                if (Piece.IsRook(pieceType))
-                                {
-                                    moves.m_RookMoves.Add(new Move(position, targetPos));
-                                    moves.m_AttackingSquares.Add(new Move(position, targetPos));
-                                }
-
-                                if (Piece.IsQueen(pieceType))
-                                {
-                                    moves.m_QueenMoves.Add(new Move(position, targetPos));
-                                    moves.m_AttackingSquares.Add(new Move(position, targetPos));
-                                }
-                            }
-
-                            file += fileDirection[i];
-                            rank += rankDirection[i];
-
-                            isValid = FileRank.IsValidFileRank(file, rank);
-                        }                   
-                    }
-                }
-            }
-
-            // Kings moves
-            {
-                pieceType = Piece.King | friendlyColor;
-
-                List<FileRank> kings = m_BitBoard.GetAllPiecesOf(pieceType);
-
-                foreach (FileRank king in kings)
-                {
-                    for (int i = 0; i < fileDirection.Length; ++i)
-                    {
-                        file = king.File + fileDirection[i];
-                        rank = king.Rank + rankDirection[i];
-
-                        // Out of bounds check
-                        isValid = FileRank.IsValidFileRank(file, rank);
-                        if (!isValid)
-                            continue;
-
-                        targetPos.Set(file, rank);
-                        targetPiece = m_CurrentBoard.GetPieceAt(targetPos);
-
-                        if (!Piece.IsEmpty(targetPiece))
-                        {
-                            if (!Piece.IsSameColor(targetPiece, friendlyColor))
-                            {
-                                moves.m_KingMoves.Add(new Move(king, targetPos));
-                                moves.m_AttackingSquares.Add(new Move(king, targetPos));
-                            }
-
-                            continue;
-                        }
-
-                        moves.m_KingMoves.Add(new Move(king, targetPos));
-                        moves.m_AttackingSquares.Add(new Move(king, targetPos));
-                    }
-                }
-            }
-
-            return moves;
+            m_BitBoard      = new BitBoard(board);
         }
 
-        public List<Move> GeneratePawnMoves(int friendlyColor)
+        public List<Move> GeneratePseudolegalMoves(int piece, int square)
         {
-            int pieceType        = Piece.Pawn | friendlyColor;
-            int forwardDirection = Piece.IsWhite(friendlyColor) ? 1 : -1;
-            int targetPiece;
+            return new List<Move>();
+        }
 
-            List<Move> moves     = new List<Move>();
-            FileRank targetPos   = new FileRank();
-            List<FileRank> pawns = m_BitBoard.GetAllPiecesOf(pieceType);
+        // Generate all legal moves given square position
+        public MoveList GenerateMoves(int position)
+        {
+            if (position < 0 || position > 63)
+                throw new ArgumentOutOfRangeException("position", $"Square index {position} is out of range!");
+
+            int pieceType = m_BitBoard.GetPieceAt(position);
+
+            if (pieceType == Piece.None)
+            {
+                Debug.Log($"No valid move at {position}");
+                return MoveList.None;
+            }
+
+            MoveList result = new MoveList(Piece.PieceColor(pieceType));
             
-            foreach (FileRank pawn in pawns)
+            ulong currentPosition   = BitManip.SetBitAt(position);
+            ulong opponentSquares   = m_BitBoard.GetAllPiecesOf(Piece.OpponentColor(pieceType));
+            ulong emptySquares      = m_BitBoard.GetEmptySquares();
+
+            ulong legalMoves        = 0;
+            ulong captures          = 0;
+
+            if (Piece.IsPawn(pieceType))
             {
-                // Out of bounds check
-                int posToCheck = pawn.Rank + forwardDirection;
-                if (!IsValidIndex(posToCheck))
-                    continue;
+                bool isWhite            = Piece.IsWhite(pieceType);
+                int forwardDirection    = 8;
 
-                targetPos.Set(pawn.File, posToCheck);
-                targetPiece = m_CurrentBoard.GetPieceAt(targetPos);
-
-                // Check if forward square is blocked
-                if (Piece.IsEmpty(targetPiece))
+                if (isWhite)
                 {
-                    moves.Add(new Move(pawn, targetPos));
+                    ulong whiteStartRank = PrecomputedBits.WhiteStartRankMasks; 
 
-                    // Double advance check (only available if pawn at starting rank)
-                    if (pawn.Rank == (Piece.IsWhite(friendlyColor) ? 1 : 6))
+                    legalMoves |= (currentPosition << forwardDirection) & emptySquares;
+                    
+                    if ((currentPosition & whiteStartRank) != 0)
+                        legalMoves |= (currentPosition << (forwardDirection * 2)) & (emptySquares << forwardDirection) & emptySquares;
+
+                    captures |= (currentPosition << (forwardDirection + 1)) & opponentSquares | (currentPosition << (forwardDirection - 1)) & opponentSquares;
+
+                    // No legal moves
+                    if (legalMoves == 0)
+                        return result;
+
+                    result.PawnMoves.AddRange(BitManip.BitsToMoves(currentPosition, legalMoves));
+                    result.PawnMoves.AddRange(BitManip.BitsToMoves(currentPosition, captures));
+
+                    result.Captures.AddRange(BitManip.BitsToMoves(currentPosition, captures));
+                }
+                else
+                {
+                    ulong blackStartRank = PrecomputedBits.BlackStartRankMasks;
+
+                    legalMoves |= (currentPosition >> forwardDirection) & emptySquares;
+
+                    if ((currentPosition & blackStartRank) != 0)
+                        legalMoves |= (currentPosition >> (forwardDirection * 2)) & (emptySquares >> forwardDirection) & emptySquares;
+
+                    captures |= (currentPosition >> (forwardDirection + 1)) & opponentSquares | (currentPosition >> (forwardDirection - 1)) & opponentSquares;
+
+                    // No legal moves
+                    if (legalMoves == 0)
+                        return result;
+
+                    result.PawnMoves.AddRange(BitManip.BitsToMoves(currentPosition, legalMoves));
+                    result.PawnMoves.AddRange(BitManip.BitsToMoves(currentPosition, captures));
+
+                    result.Captures.AddRange(BitManip.BitsToMoves(currentPosition, captures));
+                }
+
+                // TODO: Pawn promotions
+                // TODO: En-passant
+            }
+            else if (Piece.IsKnight(pieceType))
+            {
+                ulong targets   = PrecomputedBits.KnightMoves[position];
+
+                int numTargets  = BitManip.PopCount(targets);
+                int targetIndex = BitManip.LeastSigSetBit(targets);
+
+                ulong targetPosition = BitManip.SetBitAt(targetIndex);
+
+                for (int i = 0; i < numTargets; ++i)
+                {
+                    legalMoves |= targetPosition & emptySquares;
+                    captures   |= targetPosition & opponentSquares;
+
+                    if (legalMoves != 0)
+                        result.KnightMoves.AddRange(BitManip.BitsToMoves(currentPosition, legalMoves));
+                        
+                    if (captures != 0)
                     {
-                        posToCheck = pawn.Rank + forwardDirection * 2;
-
-                        targetPos.Set(pawn.File, posToCheck);
-                        targetPiece = m_CurrentBoard.GetPieceAt(targetPos);
-
-                        if (Piece.IsEmpty(targetPiece))
-                            moves.Add(new Move(pawn, targetPos));
+                        result.KnightMoves.AddRange(BitManip.BitsToMoves(currentPosition, captures));
+                        result.Captures.AddRange(BitManip.BitsToMoves(currentPosition, captures));
                     }
-                }
 
-                // Check if opponent within attack range (only check diagonally left and right)
-                for (int offset = -1; offset <= 1; offset += 2)
+                    captures = 0;
+                    legalMoves = 0;
+
+                    targetIndex = BitManip.NextLeastSigSetBit(targets, targetIndex);    
+
+                    if (targetIndex == -1)
+                        continue;
+                        
+                    targetPosition = BitManip.SetBitAt(targetIndex); 
+                } 
+            }
+
+            // TODO: other pieces
+
+            return result;
+        }
+
+        // Generate all legal given color pawn moves
+        public List<Move> GenerateAllPawnMoves(int color)
+        {
+            ulong originalPosition = m_BitBoard.GetPiecesOf(Piece.MakePiece(Piece.Pawn, color));
+
+            if (originalPosition == 0)  // No pawns on board
+                return new List<Move>();
+
+            List<Move> result       = new List<Move>();
+
+            ulong opponentSquares   = m_BitBoard.GetAllPiecesOf(Piece.OpponentColor(color));
+            ulong emptySquares      = m_BitBoard.GetEmptySquares();
+
+            int[] splitPositions    = BitManip.FindAllSetBitIndex(originalPosition);    // Split all positions
+
+            bool isWhite            = Piece.IsWhite(color);  
+            int forwardDirection    = 8; 
+            ulong legalMoves        = 0;         
+
+            if (isWhite)
+            {
+                ulong whiteStartRank = PrecomputedBits.WhiteStartRankMasks; // White pawns starting rank (A2 - H2)
+
+                foreach (int index in splitPositions)
                 {
-                    posToCheck = pawn.File + offset;
+                    ulong position = BitManip.SetBitAt(index);  // Current pawn position
 
-                    // Out of bounds check
-                    if (!IsValidIndex(posToCheck))
+                    legalMoves |= (position << forwardDirection) & emptySquares;    // One square forward
+
+                    if ((position & whiteStartRank) != 0)   // Double advancement
+                        legalMoves |= (position << (forwardDirection * 2)) & (emptySquares << forwardDirection) & emptySquares;
+
+                    // Captures
+                    legalMoves |= (position << (forwardDirection + 1)) & opponentSquares | (position << (forwardDirection - 1)) & opponentSquares;
+
+                    // No legal moves
+                    if (legalMoves == 0)
                         continue;
 
-                    targetPos.Set(posToCheck, pawn.Rank + forwardDirection);
-                    targetPiece = m_CurrentBoard.GetPieceAt(targetPos);
+                    result.AddRange(BitManip.BitsToMoves(position, legalMoves));
+                    legalMoves = 0;
+                }
+            }
+            else
+            {
+                ulong blackStartRank = PrecomputedBits.BlackStartRankMasks; // Black pawns starting rank (A7 - H7)
 
-                    // Can't attack empty squares or friendly pieces
-                    if (Piece.IsEmpty(targetPiece) || Piece.IsSameColor(targetPiece, friendlyColor))
+                foreach (int index in splitPositions)
+                {
+                    ulong position = BitManip.SetBitAt(index);  // Current pawn position
+
+                    legalMoves |= (position >> forwardDirection) & emptySquares;    // One square forward
+
+                    if ((position & blackStartRank) != 0)   // Double advancement
+                        legalMoves |= (position >> (forwardDirection * 2)) & (emptySquares >> forwardDirection) & emptySquares;
+
+                    // Captures
+                    legalMoves |= (position >> (forwardDirection + 1)) & opponentSquares | (position >> (forwardDirection - 1)) & opponentSquares;
+     
+                    if (legalMoves == 0)    // No legal moves
                         continue;
 
-                    moves.Add(new Move(pawn, targetPos));
+                    result.AddRange(BitManip.BitsToMoves(position, legalMoves));
+                    legalMoves    = 0;
                 }
             }
 
-            return moves;
+            // TODO: Pawn promotions
+            // TODO: En-Passant
+
+            return result;
         }
-
-        public List<FileRank> GenerateEmptySquares()
+    
+        public List<Move> GenerateAllKnightMoves(int color)
         {
-            return m_BitBoard.GetEmptySquares();
-        }
+            ulong originalPosition = m_BitBoard.GetPiecesOf(Piece.MakePiece(Piece.Knight, color));
 
-        public List<FileRank> GenerateFriendlySquares()
-        {
-            List<FileRank> squares = new List<FileRank>();
+            if (originalPosition == 0)  // No knights on board
+                return new List<Move>();
 
-            foreach (FileRank position in m_BitBoard.GetOccupiedSquares())
+            List<Move> result = new List<Move>();
+
+            ulong opponentSquares   = m_BitBoard.GetAllPiecesOf(Piece.OpponentColor(color));
+            ulong emptySquares      = m_BitBoard.GetEmptySquares();
+
+            int[] splitPositions    = BitManip.FindAllSetBitIndex(originalPosition);    // Split all positions
+            ulong legalMoves        = 0;
+
+            foreach (int index in splitPositions)
             {
-                int piece = m_CurrentBoard.GetPieceAt(position);
+                ulong position  = BitManip.SetBitAt(index);             // Current knight position
+                ulong targets   = PrecomputedBits.KnightMoves[index];   // Target positions
 
-                if (Piece.IsSameColor(piece, m_FriendlyColor))
-                    squares.Add(position);
+                int numTargets  = BitManip.PopCount(targets);           // Number of targets
+
+                int targetIndex      = BitManip.LeastSigSetBit(targets);
+                ulong targetPosition = BitManip.SetBitAt(targetIndex);
+
+                // Max number of positions = 8
+                for (int i = 0; i < numTargets; ++i)
+                {
+                    legalMoves |= targetPosition & emptySquares;    // Empty squares 
+                    legalMoves |= targetPosition & opponentSquares; // Captures
+
+                    if (legalMoves != 0)    // No legal moves
+                        result.AddRange(BitManip.BitsToMoves(position, legalMoves));    
+
+                    legalMoves  = 0;
+
+                    // Find next available target
+                    targetIndex = BitManip.NextLeastSigSetBit(targets, targetIndex);    
+
+                    if (targetIndex == -1)
+                        continue;
+                        
+                    targetPosition = BitManip.SetBitAt(targetIndex);    
+                }
             }
 
-            return squares;
-        }
-
-        public List<FileRank> GenerateOpponentSquares()
-        {
-            List<FileRank> squares = new List<FileRank>();
-
-            foreach (FileRank position in m_BitBoard.GetOccupiedSquares())
-            {
-                int piece = m_CurrentBoard.GetPieceAt(position);
-
-                if (!Piece.IsSameColor(piece, m_FriendlyColor))
-                    squares.Add(position);
-            }
-
-            return squares;
-        }
-
-        bool IsValidIndex(int index)
-		{
-            return index >= 0 && index < 8;
+            return result;
         }
     }
 }

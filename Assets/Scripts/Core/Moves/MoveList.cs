@@ -6,39 +6,29 @@ namespace Chess
 {
     public struct MoveList
     {
-        public readonly int         m_FriendlyColor;    // Friendly color
-        public readonly int         m_OpponentColor;    // Opponent color
+        public int FriendlyColor;
 
-        public readonly List<Move>  m_AttackingSquares; // All squares currently under attack by friendly pieces
-        public readonly List<Move>  m_PawnMoves;        // All friendly pawn moves
-        public readonly List<Move>  m_BishopMoves;      // All friendly bishop moves
-        public readonly List<Move>  m_KnightMoves;      // All friendly knight moves
-        public readonly List<Move>  m_RookMoves;        // All friendly rook moves
-        public readonly List<Move>  m_QueenMoves;       // All friendly queen moves
-        public readonly List<Move>  m_KingMoves;        // All friendly king moves
+        public List<Move> Captures;
+        public List<Move> PawnMoves;
+        public List<Move> KnightMoves;
+        public List<Move> BishopMoves;
+        public List<Move> RookMoves;
+        public List<Move> QueenMoves;
+        public List<Move> KingMoves;
 
-        public MoveList(int friendlyColor)
+        public static MoveList None => new MoveList(Piece.None);
+
+        public MoveList(int color)
         {
-            m_FriendlyColor = friendlyColor;
-            m_OpponentColor = Piece.OpponentColor(friendlyColor);
+            FriendlyColor = color;
 
-            m_AttackingSquares  = new List<Move>();
-            m_PawnMoves         = new List<Move>();
-            m_BishopMoves       = new List<Move>();
-            m_KnightMoves       = new List<Move>();
-            m_RookMoves         = new List<Move>();
-            m_QueenMoves        = new List<Move>();
-            m_KingMoves         = new List<Move>();
-        }
-
-        public void Clear()
-        {
-            m_AttackingSquares.Clear();
-            m_PawnMoves.Clear();
-            m_BishopMoves.Clear();
-            m_RookMoves.Clear();
-            m_QueenMoves.Clear();
-            m_KingMoves.Clear();
+            Captures    = new List<Move>();
+            PawnMoves   = new List<Move>();
+            KnightMoves = new List<Move>();
+            BishopMoves = new List<Move>();
+            RookMoves   = new List<Move>();
+            QueenMoves  = new List<Move>();
+            KingMoves   = new List<Move>();
         }
     }
 }
