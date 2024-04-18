@@ -10,9 +10,9 @@ namespace Chess
         public static ulong[] FileMasks => GenerateFileMasks.Value; // File mask given file index (0 - 7)
         public static ulong[] RankMasks => GenerateRankMasks.Value; // Rank mask given rank index (0 - 7)
 
-        public static ulong[] KnightMoves   => GenerateKnightMoves.Value;
-        public static ulong[] DiagonalMoves => GenerateDiagonalMoves.Value;
-        public static ulong[] RookMoves     => GenerateStraightMoves.Value;
+        public static ulong[] KnightMoves   => GenerateKnightMoves.Value;   // Knight moves
+        public static ulong[] DiagonalMoves => GenerateDiagonalMoves.Value; // Diagonal moves
+        public static ulong[] StraightMoves => GenerateStraightMoves.Value; // Straight moves
 
         public static void Initialize()
         {
@@ -20,7 +20,7 @@ namespace Chess
             _ = RankMasks;
             _ = KnightMoves;
             _ = DiagonalMoves;
-            _ = RookMoves;
+            _ = StraightMoves;
         }
 
         // Precomputed file masks
@@ -107,6 +107,7 @@ namespace Chess
             return diagonalMoves;
         });
 
+        // Precomputed straight moves
         static Lazy<ulong[]> GenerateStraightMoves = new Lazy<ulong[]>(() =>
         {
             ulong[] moves = new ulong[8];
@@ -118,128 +119,5 @@ namespace Chess
 
             return moves;
         });
-
-/*
-        public static ulong[] KnightMoves      = GenerateKnightMoves.Value;    // Knight moves
-        public static ulong[] DiagonalMoves    = GenerateDiagonalMoves.Value;  // Diagonal moves
-        public static ulong[] RookMoves        = GenerateRookMoves.Value;      // Rook moves   
-
-        public static ulong[] PawnStartingMoves = GeneratePawnStartMoveMasks.Value;   // 0 for white pawns, 1 for black pawns
-
-        
-
-        
-        
-
-        
-
-        
-
-        // Precomputed start ranks for pawns (double advancements)
-        static Lazy<ulong[]> GeneratePawnStartMoveMasks => new Lazy<ulong[]>(() =>
-        {
-            ulong[] masks = new ulong[2];
-
-            masks[0] = (255UL << 16) | (255UL << 8);
-            masks[1] = (255UL << 48) | (255UL << 40);
-
-            return masks;
-        });
-        */
-
-        /*
-        public static ulong[] m_AllKnightMoves      => m_KnightMoves.Value;            // All available knight moves
-        public static ulong[] m_AllStraightMoves    => m_SlidingStraightMoves.Value;   // All straight sliding moves
-        public static ulong[] m_AllDiagonalMoves    => m_SlidingDiagonalMoves.Value;   // All diagonal sliding moves
-        public static ulong[] m_AllKingMoves        => m_KingMoves.Value;              // All king moves
-
-        static readonly int[] m_KnightAtkOffsets    = { -17, -15, -10, -6, 6, 10, 15, 17 }; // Knight attack offsets
-        static readonly int[] m_StraightAtkOffsets  = { -8, -1, 1, 8 };                     // Straight sliding attack offsets
-        static readonly int[] m_DiagonalAtkOffsets  = { -9, -7, 7, 9 };                     // Diagonal sliding attack offsets
-        static readonly int[] m_KingAtkOffsets      = { -9, -8, -7, -1, 1, 7, 8, 9};        // King attack offsets
-
-        // Initializer for precomputating bits
-        public static void PrecomputeBits()
-        {
-            // Discarding all for faster retrieval later...
-            _ = m_AllKnightMoves;
-            _ = m_AllStraightMoves;
-            _ = m_AllDiagonalMoves;
-            _ = m_AllKingMoves;
-        }
-
-        // Lazy precomputed knight attack moves for all squares
-        
-
-        // Lazy precomputed straight attack moves for all squares
-        static readonly Lazy<ulong[]> m_SlidingStraightMoves = new Lazy<ulong[]>(() =>
-        {
-            ulong[] straightMoves = new ulong[64];
-
-            for (int i = 0; i < 64; ++i)
-            {
-                ulong straightMove = 0UL;
-
-                foreach (int offset in m_StraightAtkOffsets)
-                {
-                    for (int file = 1; file <= 7; ++file)
-                    {
-                        int targetSquare = i + offset * file;
-
-                        // Out of bounds check
-                        if (targetSquare >= 0 && targetSquare < 64)
-                        {
-                            int currentRank = i / 8;
-                            int targetRank = targetSquare / 8;
-
-                            if (currentRank == targetRank || i % 8 == targetSquare % 8)
-                            {
-                                straightMove |= 1UL << targetSquare;
-                            } 
-                            else
-                                break;
-                        } 
-                    }
-                }
-
-                straightMoves[i] = straightMove;
-            } 
-
-            return straightMoves;
-        });
-
-        // Lazy precomputed diagonal attack moves for all squares
-
-    
-        static readonly Lazy<ulong[]> m_KingMoves = new Lazy<ulong[]>(() => 
-        {
-            ulong[] kingMoves = new ulong[64];
-
-            for (int i = 0; i < 64; ++i)
-            {
-                ulong kingMove = 0UL;
-
-                foreach (int offset in m_KingAtkOffsets)
-                {
-                    int targetSquare = i + offset;
-
-                    // Out of bounds check
-                    if (targetSquare >= 0 && targetSquare < 64)
-                    {
-                        int currentRank = i / 8;
-                        int targetRank = targetSquare / 8;
-
-                        // Target square must be in range of one square
-                        if (Math.Abs(currentRank - targetRank) <= 1 && Math.Abs(i % 8 - targetSquare % 8) <= 1)
-                            kingMove |= 1UL << targetSquare;
-                    }
-                }
-
-                kingMoves[i] = kingMove;
-            }
-
-            return kingMoves;
-        });
-        */
     }
 }

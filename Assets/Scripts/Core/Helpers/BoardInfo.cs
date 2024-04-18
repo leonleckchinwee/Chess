@@ -85,5 +85,13 @@ namespace Chess
         {
             return $"{Files[pos.File]}{pos.Rank + 1}";
         }
+
+        public static string GetPositionName(int position)
+        {
+            int file = position % 8;
+            int rank = position / 8;
+
+            return $"{Files[file]}{rank + 1}";
+        }
     }
 }

@@ -29,39 +29,45 @@ namespace Chess.Game
         [SerializeField]
         string      m_Fen;  // Starting fen string
 
-        Board       m_CurrentBoard;
-        Audio       m_Audio;
+        MoveGenerator   m_Generator;
+        Board           m_CurrentBoard;
+        Audio           m_Audio;
 
-        Player      m_WhitePlayer;
-        Player      m_BlackPlayer;
+        Player          m_WhitePlayer;
+        Player          m_BlackPlayer;
 
-        int         m_ColorToMove;
+        int             m_ColorToMove;
+        List<Move>      m_CurrentMoves;
 
         Action<ChessBoard.DebugType, Board> OnDebugDraw;
 
         void Awake()
         {
-            //PrecomputedBits.Initialize();
+            PrecomputedBits.Initialize();
 
             m_Audio = gameObject.GetComponentInChildren<Audio>();
 
             m_CurrentBoard = new Board();
 
+            // Initialize starting board
             if (m_Fen == "")
                 m_CurrentBoard.InitializeDefaultStartingPosition();
             else
                 m_CurrentBoard.InitializePosition(m_Fen);
 
-            m_ColorToMove = m_CurrentBoard.m_CurrentColorTurn;
+            m_ColorToMove = m_CurrentBoard.m_CurrentColorTurn;  // Starting color
 
-            OnDebugDraw += m_ChessBoardUI.UpdateDebug;
+            m_Generator = new MoveGenerator(m_CurrentBoard);    // Move generator
 
-            m_ChessBoardUI.UpdateBoard(m_CurrentBoard);
+            if (m_AllowDebugDrawing)    // Debug drawing event
+                OnDebugDraw += m_ChessBoardUI.UpdateDebug;
         }
 
         void Start()
         {
             CreatePlayers();
+            
+            m_ChessBoardUI.UpdateBoard(m_CurrentBoard);
         }
 
         void Update()
@@ -77,63 +83,58 @@ namespace Chess.Game
 
         void OnPieceSelected(Move move)
         {
-            // MoveGenerator generator = new MoveGenerator(m_CurrentBoard);
-            //m_CurrentLegalMoves = generator.GeneratePseudoLegalMovesFor(m_ColorToMove);
+            MoveList selectedMoves = m_Generator.GeneratePseudolegalMoves(BoardInfo.FileRankToPosition(move.FromFileRank));
+            int selectedPiece      = m_CurrentBoard.GetPieceAt(move.FromFileRank);
 
-            // // TODO: Naive approach...
-            // int piece = m_CurrentBoard.GetPieceAt(move.FromFileRank);
-            // List<Move> moves;
+            switch (Piece.PieceType(selectedPiece))
+            {
+                case Piece.Pawn:
+                    m_CurrentMoves = selectedMoves.PawnMoves;
+                    break;
 
-            // switch (Piece.PieceType(piece))
-            // {
-            //     case Piece.Pawn:
-            //         moves = m_CurrentLegalMoves.m_PawnMoves;
-            //         break;
+                case Piece.Knight:
+                    m_CurrentMoves = selectedMoves.KnightMoves;
+                    break;
 
-            //     case Piece.Knight:
-            //         moves = m_CurrentLegalMoves.m_KnightMoves;
-            //         break;
+                case Piece.Bishop:
+                    m_CurrentMoves = selectedMoves.BishopMoves;
+                    break;
 
-            //     case Piece.Bishop:
-            //         moves = m_CurrentLegalMoves.m_BishopMoves;
-            //         break;
+                case Piece.Rook:
+                    m_CurrentMoves = selectedMoves.RookMoves;
+                    break;
 
-            //     case Piece.Rook:
-            //         moves = m_CurrentLegalMoves.m_RookMoves;
-            //         break;
+                case Piece.Queen:
+                    m_CurrentMoves = selectedMoves.QueenMoves;
+                    break;
 
-            //     case Piece.Queen:
-            //         moves = m_CurrentLegalMoves.m_QueenMoves;
-            //         break;
+                case Piece.King:
+                    m_CurrentMoves = selectedMoves.KingMoves;
+                    break;
 
-            //     case Piece.King:
-            //         moves = m_CurrentLegalMoves.m_KingMoves;
-            //         break;
+                default:
+                    m_CurrentMoves = new List<Move>();
+                    break;
+            }
 
-            //     default:
-            //     case Piece.None:
-            //         return;
-            // }
-
-            // foreach (Move m in moves)
-            // {
-            //     m_ChessBoardUI.SelectSquare(m.ToFileRank);
-            // }
+            foreach (Move square in m_CurrentMoves)
+            {
+                m_ChessBoardUI.HighlightLegalMoves(square.ToFileRank);
+            }
         }
 
         void UpdateOnMoveSelected(Move move)
         {
-            // if (m_CurrentLegalMoves.m_AttackingSquares.Contains(move))
-            // {
-            //     int piece = m_CurrentBoard.GetPieceAt(move.FromFileRank);
+            if (m_CurrentMoves.Contains(move))
+            {
+                m_CurrentBoard.MakeMove(move);
+                
+                m_Generator.Update(m_CurrentBoard);
+                
+                m_Audio.PlayPlacementSfx();
 
-            //     m_CurrentBoard.PlacePieceAt(move.ToFileRank, piece);
-            //     m_CurrentBoard.RemovePieceAt(move.FromFileRank);
-
-            //     OnTurnSwitch();
-
-            //     m_Audio.PlayPlacementSfx();  // TODO: Capture piece sound!
-            // }
+                OnTurnSwitch();
+            }
 
             m_ChessBoardUI.UpdateBoard(m_CurrentBoard);
         }

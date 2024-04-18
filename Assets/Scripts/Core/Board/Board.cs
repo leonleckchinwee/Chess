@@ -37,14 +37,20 @@ namespace Chess
             m_CurrentColorTurn = loadedPosition.m_WhiteTurnToMove ? Piece.White : Piece.Black;
         }
 
-        public void MakeMove()
+        public void MakeMove(Move move)
         {
+            int piece = GetPieceAt(move.FromFileRank);
 
+            PlacePieceAt(move.FromFileRank, Piece.None);
+            PlacePieceAt(move.ToFileRank, piece);
         }
 
-        public void UnmakeMove()
+        public void UnmakeMove(Move move)
         {
+            int piece = GetPieceAt(move.ToFileRank);
 
+            PlacePieceAt(move.FromFileRank, piece);
+            PlacePieceAt(move.ToFileRank, Piece.None);
         }
 
         public int GetPieceAt(int file, int rank)

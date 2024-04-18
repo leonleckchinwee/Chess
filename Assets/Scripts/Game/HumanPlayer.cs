@@ -70,7 +70,7 @@ namespace Chess.Game
                         
                         if (!m_SelectOnlyMode)
                         {
-                            //OnMoveSelect(new Move(m_CurrentSelectedPosition, m_CurrentSelectedPosition));
+                            OnMoveSelect(new Move(m_CurrentSelectedPosition, m_CurrentSelectedPosition));
                             m_Action = PlayerAction.Dragging;
                         }
                     }
@@ -95,7 +95,7 @@ namespace Chess.Game
                     if (m_CurrentSelectedPosition.Equals(target))
                         return;
                         
-                    //OnTryPlacePiece(new Move(m_CurrentSelectedPosition, target));
+                    OnTryPlacePiece(new Move(m_CurrentSelectedPosition, target));
                     CancelSelections();
                 }
             }

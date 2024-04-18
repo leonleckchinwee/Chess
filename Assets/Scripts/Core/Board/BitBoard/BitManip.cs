@@ -88,7 +88,7 @@ namespace Chess
             for (int i = index + 1; i < 64; ++i)
             {
                 if ((bitBoard & (1UL << i)) != 0)
-                    return i;
+                    return i;            
             }
 
             return -1;
@@ -118,7 +118,7 @@ namespace Chess
             int len = PopCount(bitBoard);
             
             if (PopCount(bitBoard) == 0)
-                throw new ArgumentOutOfRangeException("origin", "Origin board must only have one position");
+                throw new ArgumentOutOfRangeException("origin", "Empty board!");
 
             ulong[] result  = new ulong[len];
             int index       = LeastSigSetBit(bitBoard);
@@ -188,6 +188,23 @@ namespace Chess
             return result;
         }
 
+        public static void SortReverse(ref ulong[] bitBoards)
+        {
+            if (bitBoards == null || bitBoards.Length == 0)
+                throw new NullReferenceException("Cannot sort empty bitboards!");
+
+            int left = 0;
+            int right = bitBoards.Length - 1;
+
+            while (left < right)
+            {
+                (bitBoards[left], bitBoards[right]) = (bitBoards[right], bitBoards[left]);
+
+                ++left;
+                --right;
+            }
+        }
+
         // TODO...
         // Find all the bits set to 1 and convert into FileRank
         public static List<FileRank> FindOccupiedSquares(ulong board)
@@ -227,25 +244,5 @@ namespace Chess
 
             return result;
         }  
-
-        /*
-
-        // Finds index of most significant bit (left-most 1)
-        public static int MostSigSetBit(ulong bitBoard)
-        {
-            return 63 - CountLeadingZeroes(bitBoard);
-        }  
-
-        public static int NextMostSigSetBit(ulong bitBoard, int index)
-        {
-            for (int i = index; i >= 0; --i)
-            {
-                if ((bitBoard & (1UL << i)) != 0)
-                    return i;
-            }
-
-            return -1;
-        }
-        */
     }
 }

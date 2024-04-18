@@ -249,6 +249,16 @@ namespace Chess.UI
             SelectSquare(position.File, position.Rank);
         }
 
+        public void HighlightLegalMoves(int file, int rank)
+        {
+            SetSquareColor(file, rank, m_BoardPrefab.LightSquares.Legal, m_BoardPrefab.DarkSquares.Legal);
+        }
+
+        public void HighlightLegalMoves(FileRank position)
+        {
+            HighlightLegalMoves(position.File, position.Rank);
+        }
+
         public void DragPiece(int file, int rank, Vector2 mousePos)
         {
             m_Pieces[file, rank].transform.position = new Vector3(mousePos.x, mousePos.y, m_PieceDragDepth);

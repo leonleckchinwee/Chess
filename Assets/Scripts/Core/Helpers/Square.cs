@@ -15,4 +15,17 @@ namespace Chess
         public const int G1 = 6, G2 = 14, G3 = 22, G4 = 30, G5 = 38, G6 = 46, G7 = 54, G8 = 62;
         public const int H1 = 7, H2 = 15, H3 = 23, H4 = 31, H5 = 39, H6 = 47, H7 = 55, H8 = 63;
     }
+
+    public enum Direction : int
+    {
+        None        = 0,
+        BottomLeft  = -9,
+        Bottom      = -8,
+        BottomRight = -7,
+        Left        = -1,
+        Right       = 1,
+        TopLeft     = 7,
+        Top         = 8,
+        TopRight    = 9
+    }
 }
